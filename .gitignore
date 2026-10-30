@@ -1,0 +1,38 @@
+# ============================================================
+# Sprachinseln — Repo-Root = Inhalt von D:\Vault\languages\sprache-app
+# Alles, was NICHT ins Repo soll, ist hier explizit aufgelistet.
+# ============================================================
+
+# --- Abhaengigkeiten / Paketreste
+node_modules/
+*.tar.gz
+
+# --- Hosting-Konfiguration (enthaellt project_id, bleibt lokal)
+.openai/
+.openai/hosting.json
+
+# --- Dokumente: aktuell vorhandene .md und .pdf bleiben lokal
+*.md
+*.pdf
+
+# --- Laufzeit-Artefakte des LAN-Servers (Logs, Prozess-Zustand, Screenshots)
+outputs/
+outputs/lan-server.json
+outputs/*.log
+outputs/*.png
+
+# --- Zeitliche Arbeitsdateien (gerenderte Seiten der Probestunde-PDF)
+tmp/
+
+# --- Betriebssystem / Editor
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# ============================================================
+# Bewusst AUSSERHALB dieser Repo-Root, werden von git hier nie gesehen:
+#   ..\AGENTS_CODE.md, ..\ARCHITECTURE.md, ..\initial prompt.txt,
+#   ..\Language Learner.md, ..\OFFENE_FRAGEN.md, ..\Spanish - vocab.md,
+#   ..\status.md, ..\status_archive.md, ..\TODO.md, ..\Probestunde.pdf,
+#   ..\.codex-attachments\  (8 JPG-Chatanhaenge)
+# ============================================================

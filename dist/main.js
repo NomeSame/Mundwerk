@@ -1,0 +1,10 @@
+import { createRepository } from './data/progress.js';
+import { createStore } from './state/store.js';
+import { render } from './ui/view.js';
+import { bindEvents } from './ui/events.js';
+import { getStorage, download, registerOffline } from './infrastructure/platform.js';
+const root = document.querySelector('#app');
+const store = createStore(createRepository(getStorage()));
+store.subscribe(state => render(root, state));
+bindEvents(root, store, { confirm:message => window.confirm(message), download });
+registerOffline(()=>store.warn('offlineError'));
