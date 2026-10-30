@@ -67,6 +67,9 @@ test('wiederholte Einzelwert-Header werden abgelehnt statt zur Kommaliste versch
     assert.match(await rawExchange(port,`GET / HTTP/1.1\r\n${headers.join('\r\n')}\r\n\r\n`),/^HTTP\/1\.1 400 /,headers.join(' | '));
   }
   assert.match(await rawExchange(port,'GET / HTTP/1.1\r\nHost: 127.0.0.1:4173\r\n\r\n'),/^HTTP\/1\.1 200 /);
+  // Ein Grossbuchstabe im Headernamen ist erlaubt, macht aber keine zweite Host-Zeile daraus.
+  assert.match(await rawExchange(port,'GET / HTTP/1.1\r\nHOST: 127.0.0.1:4173\r\n\r\n'),/^HTTP\/1\.1 200 /);
+  assert.match(await rawExchange(port,'GET / HTTP/1.1\r\nHOST: 127.0.0.1:4173\r\nhost: 127.0.0.1:4173\r\n\r\n'),/^HTTP\/1\.1 400 /);
 });
 test('gleichzeitige Verbindungen sind am Server gedeckelt, nicht nur im Kernel-Backlog',async t=>{
   const assets=await loadAssets(),server=createStaticServer({assets,connectionLimit:2});
