@@ -10,7 +10,7 @@ const securityHeaders={
   'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY','Referrer-Policy':'no-referrer',
   'Cross-Origin-Resource-Policy':'same-origin',
   'Permissions-Policy':'camera=(), microphone=(), geolocation=(), usb=(), serial=()',
-  'Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
+  'Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; require-trusted-types-for 'script'"
 };
 export async function loadAssets(root=defaultRoot) {
   const absolute=path.resolve(root),canonical=await realpath(absolute);

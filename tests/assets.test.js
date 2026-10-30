@@ -16,6 +16,25 @@ test('styles.css bindet keine externe Quelle ein und jede Schrift ist ausgeliste
     assert.equal(bytes.readUInt32BE(0),0x774f4632,route+' ist keine woff2-Datei');
   }
 });
+test('HTML wird nur an einer Stelle eingefügt, und die verlangt die Render-Richtlinie', async () => {
+  const sinks=[];
+  const walk=async(directory,prefix='')=>{
+    for(const entry of await readdir(directory,{withFileTypes:true})){
+      if(entry.isDirectory())await walk(new URL(entry.name+'/',directory),prefix+entry.name+'/');
+      else if(entry.name.endsWith('.js')){
+        const source=await readFile(new URL(entry.name,directory),'utf8');
+        for(const match of source.matchAll(/\.\s*(innerHTML|outerHTML|insertAdjacentHTML|createContextualFragment)\b|document\.write(?:ln)?\b/g))sinks.push(prefix+entry.name+' '+match[0]);
+      }
+    }
+  };
+  await walk(new URL('../dist/',import.meta.url));
+  assert.deepEqual(sinks,['ui/view.js .innerHTML'],sinks.join(', '));
+  assert.match(await readFile(new URL('../dist/ui/view.js',import.meta.url),'utf8'),/innerHTML=renderHTML`/);
+  assert.match(await readFile(new URL('../dist/ui/view.js',import.meta.url),'utf8'),/from '\.\.\/infrastructure\/trusted-types\.js'/);
+  const platform=await readFile(new URL('../dist/infrastructure/platform.js',import.meta.url),'utf8');
+  assert.match(platform,/serviceWorker\.register\(renderScriptURL\('/);
+  assert.doesNotMatch(platform,/serviceWorker\.register\('/);
+});
 test('Assetliste und Offline-Cache decken genau dieselben Dateien ab', async () => {
   const worker=await readFile(new URL('../dist/sw.js',import.meta.url),'utf8');
   const files=worker.match(/const FILES = \[([^\]]+)\]/)[1].match(/'([^']+)'/g).map(s=>s.slice(1,-1));

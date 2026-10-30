@@ -33,8 +33,9 @@ test('only listed web assets are served, with safe headers and HEAD support',asy
   assert.equal(head.body,'');assert.equal(head.headers['content-length'],get.headers['content-length']);
   const csp=get.headers['content-security-policy'];
   assert.match(csp,/script-src 'self'/);
-  // Richtungszeichen in der CSP wäre eine ungeprüfte Fremdquelle; die App lädt ausschließlich eigene Dateien.
+  // Eine http-Quelle in der CSP wäre eine ungeprüfte Fremdladung; die App lädt ausschließlich eigene Dateien.
   assert.doesNotMatch(csp,/https?:\/\//);assert.match(csp,/style-src 'self';/);assert.match(csp,/font-src 'self';/);
+  assert.match(csp,/require-trusted-types-for 'script'/);
   const font=await request(port,'/assets/fonts/dm-sans-latin.woff2');
   assert.equal(font.status,200);assert.equal(font.headers['content-type'],'font/woff2');
 });
