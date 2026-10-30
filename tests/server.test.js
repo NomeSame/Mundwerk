@@ -47,6 +47,32 @@ test('writes, uploads, unknown hosts, request bodies and oversized targets are d
   assert.equal((await request(port,'/',{headers:{'Content-Length':'4'},body:'test'})).status,400);
   assert.equal((await request(port,'/'+ 'a'.repeat(2100))).status,414);
 });
+async function rawExchange(port,payload){
+  return await new Promise((resolve,reject)=>{
+    let value='',settled=false;const finish=()=>{if(!settled){settled=true;resolve(value);}};
+    const socket=net.connect(port,'127.0.0.1',()=>socket.write(payload));
+    socket.setTimeout(2000,()=>{socket.destroy();if(!settled){settled=true;reject(Error('Antwort blieb aus'));}});
+    socket.on('data',(chunk)=>{value+=chunk;if(value.includes('\r\n\r\n'))finish();});
+    socket.on('end',finish);socket.on('close',finish);socket.on('error',finish);
+  });
+}
+test('wiederholte Einzelwert-Header werden abgelehnt statt zur Kommaliste verschmolzen',async t=>{const {port}=await fixture(t);
+  for(const headers of [['Host: 127.0.0.1:4173','Host: evil.example'],['Host: evil.example','Host: 127.0.0.1:4173'],['Host: 127.0.0.1:4173','Content-Length: 0','Content-Length: 0'],['Host: 127.0.0.1:4173','Transfer-Encoding: chunked','Transfer-Encoding: identity'],['Host: 127.0.0.1:4173','host: 127.0.0.1:4173']]){
+    assert.match(await rawExchange(port,`GET / HTTP/1.1\r\n${headers.join('\r\n')}\r\n\r\n`),/^HTTP\/1\.1 400 /,headers.join(' | '));
+  }
+  assert.match(await rawExchange(port,'GET / HTTP/1.1\r\nHost: 127.0.0.1:4173\r\n\r\n'),/^HTTP\/1\.1 200 /);
+});
+test('gleichzeitige Verbindungen sind am Server gedeckelt, nicht nur im Kernel-Backlog',async t=>{
+  const assets=await loadAssets(),server=createStaticServer({assets,connectionLimit:2});
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  t.after(()=>new Promise(resolve=>{server.closeAllConnections();server.close(resolve);}));
+  assert.equal(server.maxConnections,2);
+  const port=server.address().port,holders=[net.connect(port,'127.0.0.1'),net.connect(port,'127.0.0.1')];
+  await new Promise(resolve=>setTimeout(resolve,150));
+  assert.doesNotMatch(await rawExchange(port,'GET / HTTP/1.1\r\nHost: 127.0.0.1:4173\r\n\r\n'),/^HTTP\/1\.1 200 /);
+  for(const socket of holders)await new Promise(resolve=>{socket.on('close',resolve);socket.destroy();});
+  assert.match(await rawExchange(port,'GET / HTTP/1.1\r\nHost: 127.0.0.1:4173\r\n\r\n'),/^HTTP\/1\.1 200 /);
+});
 test('CONNECT tunnels and WebSocket upgrades are closed without forwarding',async t=>{
   const {port}=await fixture(t);
   for(const payload of ['CONNECT example.com:443 HTTP/1.1\r\nHost: localhost:4173\r\n\r\n','GET / HTTP/1.1\r\nHost: localhost:4173\r\nConnection: Upgrade\r\nUpgrade: websocket\r\n\r\n']){

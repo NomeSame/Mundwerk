@@ -23,13 +23,28 @@ export async function loadAssets(root=defaultRoot) {
   }
   return assets;
 }
-export function createStaticServer({assets,lan=null,port=4173}={}) {
+const singleValueHeaders=new Set(['host','content-length','transfer-encoding']);
+// Node verschmilft wiederholte Einzelwert-Header zu einer Kommaliste und benutzt dann den ersten Wert.
+// Hinter Vermittler oder CDN ist das die klassische Stelle für Request-Smuggling und Host-Täuschung,
+// geprüft wird deshalb die Anzahl tatsächlich gesendeter Kopfzeilen, nicht ihr kombinierter Inhalt.
+function ambiguousHeaders(rawHeaders){
+  const seen=new Set();
+  for(let index=0;index<rawHeaders.length;index+=2){
+    const name=rawHeaders[index].toLowerCase();
+    if(!singleValueHeaders.has(name))continue;
+    if(seen.has(name))return true;
+    seen.add(name);
+  }
+  return false;
+}
+export function createStaticServer({assets,lan=null,port=4173,connectionLimit=64}={}) {
   const hosts=new Set([`localhost:${port}`,`127.0.0.1:${port}`,...(lan?[`${lan.ip}:${port}`]:[])]);
   const reject=(response,status)=>{
     response.writeHead(status,{...securityHeaders,'Content-Type':'text/plain; charset=utf-8','Connection':'close',...(status===405?{Allow:'GET, HEAD'}:{})});
     response.end('Anfrage nicht erlaubt.');
   };
   const server=http.createServer({maxHeaderSize:8192,requestTimeout:10000,headersTimeout:5000,keepAliveTimeout:3000},(request,response)=>{
+    if(ambiguousHeaders(request.rawHeaders))return reject(response,400);
     if(!peerAllowed(request.socket.remoteAddress,lan))return reject(response,403);
     if(!hosts.has(request.headers.host))return reject(response,403);
     if(!['GET','HEAD'].includes(request.method))return reject(response,405);
@@ -44,7 +59,9 @@ export function createStaticServer({assets,lan=null,port=4173}={}) {
     response.writeHead(200,{...securityHeaders,'Content-Type':asset.type,'Content-Length':asset.body.length});
     response.end(request.method==='HEAD'?undefined:asset.body);
   });
-  server.maxConnections=64;server.maxRequestsPerSocket=100;server.maxHeadersCount=40;
+  server.maxConnections=connectionLimit;server.maxRequestsPerSocket=100;server.maxHeadersCount=40;
+  // Obergrenze für gleichzeitige Verbindungen: ohne sie hält ein einziger Client unbegrenzt offene Sockets
+  // frei. Der Kernel-Backlog nimmt Anfragen trotzdem vorher an, gemessen wird die Grenze am Server selbst.
   server.setTimeout(10000,socket=>socket.destroy());
   server.on('connect',(_req,socket)=>socket.destroy());
   server.on('upgrade',(_req,socket)=>socket.destroy());
