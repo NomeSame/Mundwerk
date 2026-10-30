@@ -89,6 +89,11 @@ test('LAN configuration requires an actual private interface and rejects other n
   for(const ip of ['0.0.0.0','8.8.8.8','192.168.10.2','::'])assert.throws(()=>lanConfiguration(ip,interfaces));
   assert.equal(peerAllowed('192.168.10.2',null),false);
 });
+test('LAN-Profil akzeptiert nur eng begrenzte Subnetze, höchstens /22',()=>{
+  const interfaces=(mask)=>({'WLAN':[{address:'192.168.10.177',family:'IPv4',internal:false,cidr:`192.168.10.177/${mask}`}]});
+  for(const mask of[22,23,24,30])assert.equal(lanConfiguration('192.168.10.177',interfaces(mask)).subnet.split('/')[1],String(mask),`/${mask}`);
+  for(const mask of[8,16,21,31,32])assert.throws(()=>lanConfiguration('192.168.10.177',interfaces(mask)),/begrenztem Subnetz/,`/${mask}`);
+});
 test('lesson progress renders without inline styles forbidden by the server CSP',()=>{
   const store=createStore(createRepository({getItem:()=>null,setItem:()=>{}}));store.subscribe(()=>{});store.start();
   const html=practiceView(store.state,{name:'Alltag'});
