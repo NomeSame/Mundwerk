@@ -60,8 +60,8 @@ export function createStaticServer({assets,lan=null,port=4173,connectionLimit=64
     response.end(request.method==='HEAD'?undefined:asset.body);
   });
   server.maxConnections=connectionLimit;server.maxRequestsPerSocket=100;server.maxHeadersCount=40;
-  // Obergrenze für gleichzeitige Verbindungen: ohne sie hält ein einziger Client unbegrenzt offene Sockets
-  // frei. Der Kernel-Backlog nimmt Anfragen trotzdem vorher an, gemessen wird die Grenze am Server selbst.
+  // Obergrenze für gleichzeitige Verbindungen: ohne sie hält ein einziger Client unbegrenzt offene Sockets frei.
+  // Der Kernel-Backlog nimmt Anfragen trotzdem vorher an, gemessen wird die Grenze deshalb am Server selbst.
   server.setTimeout(10000,socket=>socket.destroy());
   server.on('connect',(_req,socket)=>socket.destroy());
   server.on('upgrade',(_req,socket)=>socket.destroy());

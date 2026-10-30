@@ -8,7 +8,7 @@ import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {loadAssets,createStaticServer} from '../server/static-server.mjs';
 import {assetPaths} from '../server/asset-list.mjs';
-import {lanConfiguration,peerAllowed} from '../server/network.mjs';
+import {lanConfiguration,peerAllowed,lanBlock} from '../server/network.mjs';
 import {createStore} from '../dist/state/store.js';
 import {createRepository} from '../dist/data/progress.js';
 import {practiceView} from '../dist/ui/practice.js';
@@ -93,6 +93,28 @@ test('LAN-Profil akzeptiert nur eng begrenzte Subnetze, höchstens /22',()=>{
   const interfaces=(mask)=>({'WLAN':[{address:'192.168.10.177',family:'IPv4',internal:false,cidr:`192.168.10.177/${mask}`}]});
   for(const mask of[22,23,24,30])assert.equal(lanConfiguration('192.168.10.177',interfaces(mask)).subnet.split('/')[1],String(mask),`/${mask}`);
   for(const mask of[8,16,21,31,32])assert.throws(()=>lanConfiguration('192.168.10.177',interfaces(mask)),/begrenztem Subnetz/,`/${mask}`);
+});
+test('die Subnetzprüfung wird geteilt statt pro Anfrage neu aufgebaut',()=>{
+  const lan=lanConfiguration('192.168.10.177',{'WLAN':[{address:'192.168.10.177',family:'IPv4',internal:false,cidr:'192.168.10.177/24'}]});
+  const other=lanConfiguration('192.168.11.10',{'WLAN':[{address:'192.168.11.10',family:'IPv4',internal:false,cidr:'192.168.11.10/24'}]});
+  assert.equal(lanBlock(lan),lanBlock(lan));assert.notEqual(lanBlock(lan),lanBlock(other));
+  assert.equal(lanBlock(lan).check('192.168.10.2','ipv4'),true);assert.equal(lanBlock(other).check('192.168.10.2','ipv4'),false);
+  // Der Puffer ist begrenzt: ein langlebiger Server darf nicht unbegrenzt Prüfobjekte ansammeln.
+  const many=Array.from({length:9},(_,index)=>lanConfiguration(`192.168.${index}.10`,{[`WLAN${index}`]:[{address:`192.168.${index}.10`,family:'IPv4',internal:false,cidr:`192.168.${index}.10/24`}]}));
+  const first=lanBlock(many[0]);for(const lan of many)lanBlock(lan);
+  const again=lanBlock(many[0]);assert.notEqual(again,first);assert.equal(again.check('192.168.0.2','ipv4'),true);
+});
+test('die Verbindungsobergrenze des Servers ist messbar, der Kernel-Backlog nicht',async t=>{
+  const assets=await loadAssets(),server=createStaticServer({assets,connectionLimit:2});
+  await new Promise((resolve)=>server.listen(0,'127.0.0.1',resolve));t.after(()=>new Promise((resolve)=>{server.closeAllConnections();server.close(resolve);}));
+  const port=server.address().port;assert.equal(server.maxConnections,2);
+  const holders=[net.connect(port,'127.0.0.1'),net.connect(port,'127.0.0.1')];for(const socket of holders)socket.on('error',()=>{});
+  await new Promise((resolve)=>setTimeout(resolve,100));
+  const third=net.connect(port,'127.0.0.1',()=>third.write('GET / HTTP/1.1\r\nHost: 127.0.0.1:4173\r\nConnection: close\r\n\r\n'));third.on('error',()=>{});
+  const answer=await new Promise((resolve)=>{let value='';third.on('data',(chunk)=>value+=chunk);third.on('close',()=>resolve(value));third.setTimeout(1500,()=>{third.destroy();resolve(value);});});
+  assert.doesNotMatch(answer,/^HTTP\/1\.1 200 /,`dritte Verbindung blieb offen: ${answer.split('\r\n')[0]}`);
+  for(const socket of holders)await new Promise((resolve)=>{socket.on('close',resolve);socket.destroy();});
+  assert.match(await rawExchange(port,'GET / HTTP/1.1\r\nHost: 127.0.0.1:4173\r\nConnection: close\r\n\r\n'),/^HTTP\/1\.1 200 /);
 });
 test('lesson progress renders without inline styles forbidden by the server CSP',()=>{
   const store=createStore(createRepository({getItem:()=>null,setItem:()=>{}}));store.subscribe(()=>{});store.start();

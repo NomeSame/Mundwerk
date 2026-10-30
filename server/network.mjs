@@ -8,9 +8,20 @@ export function lanConfiguration(ip,interfaces=networkInterfaces()) {
   const network=ip.split('.').map((value,index)=>{const bits=Math.max(0,Math.min(8,prefix-index*8));return Number(value)&(bits?256-2**(8-bits):0);}).join('.');
   return {ip,network,prefix,subnet:`${network}/${prefix}`,interfaceAlias:match.name};
 }
+const lanBlocks=new Map();
+// peerAllowed läuft vor jeder Auslieferung. Eine neue BlockList pro Anfrage ist reiner Allokationsaufwand
+// auf dem heißen Pfad; das Prüfobjekt pro Subnetz wird wiederverwendet. Exportiert ist es für den Identitäts-Test.
+export function lanBlock(lan){
+  const key=`${lan.network}/${lan.prefix}`;
+  let block=lanBlocks.get(key);
+  if(!block){
+    if(lanBlocks.size>8)lanBlocks.clear();
+    block=new BlockList();block.addSubnet(lan.network,lan.prefix,'ipv4');lanBlocks.set(key,block);
+  }
+  return block;
+}
 export function peerAllowed(address,lan) {
   if(address==='127.0.0.1')return true;
   if(!lan||!isIPv4(address))return false;
-  const block=new BlockList();block.addSubnet(lan.network,lan.prefix,'ipv4');
-  return block.check(address,'ipv4');
+  return lanBlock(lan).check(address,'ipv4');
 }
