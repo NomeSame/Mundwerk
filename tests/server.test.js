@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import net from 'node:net';
 import {spawnSync} from 'node:child_process';
-import {mkdtemp,mkdir,writeFile,symlink,rm,copyFile} from 'node:fs/promises';
+import {mkdtemp,mkdir,writeFile,symlink,rm,copyFile,readFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {loadAssets,createStaticServer} from '../server/static-server.mjs';
@@ -109,6 +109,13 @@ test('die Subnetzprüfung wird geteilt statt pro Anfrage neu aufgebaut',()=>{
   const many=Array.from({length:9},(_,index)=>lanConfiguration(`192.168.${index}.10`,{[`WLAN${index}`]:[{address:`192.168.${index}.10`,family:'IPv4',internal:false,cidr:`192.168.${index}.10/24`}]}));
   const first=lanBlock(many[0]);for(const lan of many)lanBlock(lan);
   const again=lanBlock(many[0]);assert.notEqual(again,first);assert.equal(again.check('192.168.0.2','ipv4'),true);
+});
+test('die WLAN-Skripte halten Adresse und Rechnerpfad aus dem Repository draußen', async () => {
+  for(const name of ['Start-Wlan.ps1','Enable-Wlan.ps1','Stop-Wlan.ps1']){
+    const text=await readFile(new URL('../'+name,import.meta.url),'utf8');
+    assert.doesNotMatch(text,/\b(?:10|192\.168|172\.(?:1[6-9]|2\d|3[01]))\.\d{1,3}\.\d{1,3}\b/,name+' nennt eine private IPv4-Adresse.');
+    assert.doesNotMatch(text,/USERPROFILE|[\\/]Users[\\/]/i,name+' enthält einen Rechnerpfad.');
+  }
 });
 test('lesson progress renders without inline styles forbidden by the server CSP',()=>{
   const store=createStore(createRepository({getItem:()=>null,setItem:()=>{}}));store.subscribe(()=>{});store.start();

@@ -1,10 +1,14 @@
-param([string]$LanAddress='192.168.10.177')
+param(
+  [Parameter(Mandatory=$true)][string]$LanAddress,
+  [Parameter(Mandatory=$true)][string]$NodePath
+)
 $ErrorActionPreference='Stop'
 if([Security.Principal.WindowsPrincipal]::new([Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)){
   throw 'Den Webserver nicht als Administrator starten. Bitte normales PowerShell-Fenster verwenden.'
 }
-$nodeExecutable=Join-Path $env:USERPROFILE '.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe'
-if(-not(Test-Path -LiteralPath $nodeExecutable)){throw 'Der geprüfte Node-Pfad fehlt. Keine andere Laufzeit automatisch freigeben.'}
+# Rechnerabhängige Pfade gehören nicht in die Repository-Kopie: wer startet, übergibt sie.
+$nodeExecutable=(Resolve-Path -LiteralPath $NodePath).Path
+if((Split-Path $nodeExecutable -Leaf) -ne 'node.exe'){throw 'Erwartet wird node.exe.'}
 $statePath=Join-Path $PSScriptRoot 'outputs\lan-server.json'
 if(Test-Path -LiteralPath $statePath){
   $previous=Get-Content -LiteralPath $statePath -Raw|ConvertFrom-Json
