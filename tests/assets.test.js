@@ -3,6 +3,31 @@ import assert from 'node:assert/strict';
 import { readFile, access } from 'node:fs/promises';
 import {readdir} from 'node:fs/promises';
 import { vocabulary } from '../dist/data/vocabulary.js';
+import { assetPaths } from '../server/asset-list.mjs';
+test('styles.css bindet keine externe Quelle ein und jede Schrift ist ausgelistet', async () => {
+  const css = await readFile(new URL('../dist/styles.css',import.meta.url),'utf8');
+  assert.doesNotMatch(css,/https?:\/\//,'Die Stilvorlage ruft eine fremde Quelle auf.');
+  const urls=[...css.matchAll(/url\('([^']+)'\)/g)].map(match=>match[1]);
+  assert.ok(urls.length>=4,'keine lokalen Schriften eingebunden');
+  for(const url of urls){
+    const route='/'+url.replace(/^\.\//,'');
+    assert.ok(assetPaths.includes(route),route+' fehlt in der Assetliste');
+    const bytes=await readFile(new URL('../dist/'+route.slice(1),import.meta.url));
+    assert.equal(bytes.readUInt32BE(0),0x774f4632,route+' ist keine woff2-Datei');
+  }
+});
+test('Assetliste und Offline-Cache decken genau dieselben Dateien ab', async () => {
+  const worker=await readFile(new URL('../dist/sw.js',import.meta.url),'utf8');
+  const files=worker.match(/const FILES = \[([^\]]+)\]/)[1].match(/'([^']+)'/g).map(s=>s.slice(1,-1));
+  const routes=new Set(files.map(file=>file==='/'?'/':file.replace(/^\./,'')));
+  // Absichtliche Ausnahme: der Service Worker darf nicht sich selbst cachen, sonst bleibt eine alte Version hängen.
+  const excluded=new Set(['/sw.js']);
+  for(const route of assetPaths)if(!excluded.has(route))assert.ok(routes.has(route),route+' fehlt im Offline-Cache');
+  assert.ok(!routes.has('/sw.js'),'/sw.js darf nicht im Offline-Cache stehen');
+  for(const route of routes)if(route!=='/')assert.ok(assetPaths.includes(route),route+' ist nicht ausgelistet');
+  // '/' ist die Index-Route des Servers, kein Asset-Pfad; sie gehört trotzdem in den Offline-Cache.
+  assert.ok(routes.has('/'),'/ fehlt im Offline-Cache');assert.ok(!assetPaths.includes('/'));
+});
 test('PWA manifest points to existing icons, start page and valid PNG sizes', async () => {
   const manifest = JSON.parse(await readFile(new URL('../dist/manifest.webmanifest',import.meta.url),'utf8'));
   assert.equal(manifest.display,'standalone');

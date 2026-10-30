@@ -9,5 +9,7 @@ export const assetPaths=Object.freeze([
   '/core/meaning-assessment.js','/core/meaning-policy.js','/data/language-forms.js','/core/reply-assessment.js','/core/session.js','/state/store.js',
   '/ui/view.js','/ui/components.js','/ui/context.js','/ui/messages.js','/ui/assessment.js',
   '/ui/word-review.js','/ui/meaning-review.js','/ui/practice.js','/ui/events.js',
-  '/infrastructure/platform.js'
+  '/infrastructure/platform.js',
+  '/assets/fonts/dm-sans-latin.woff2','/assets/fonts/dm-sans-latin-ext.woff2',
+  '/assets/fonts/libre-caslon-display-latin.woff2','/assets/fonts/libre-caslon-display-latin-ext.woff2'
 ]);

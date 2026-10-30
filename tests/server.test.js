@@ -31,7 +31,12 @@ test('only listed web assets are served, with safe headers and HEAD support',asy
   }
   const get=await request(port),head=await request(port,'/',{method:'HEAD'});
   assert.equal(head.body,'');assert.equal(head.headers['content-length'],get.headers['content-length']);
-  assert.match(get.headers['content-security-policy'],/script-src 'self'/);
+  const csp=get.headers['content-security-policy'];
+  assert.match(csp,/script-src 'self'/);
+  // Richtungszeichen in der CSP wäre eine ungeprüfte Fremdquelle; die App lädt ausschließlich eigene Dateien.
+  assert.doesNotMatch(csp,/https?:\/\//);assert.match(csp,/style-src 'self';/);assert.match(csp,/font-src 'self';/);
+  const font=await request(port,'/assets/fonts/dm-sans-latin.woff2');
+  assert.equal(font.status,200);assert.equal(font.headers['content-type'],'font/woff2');
 });
 test('project files, path traversal, Windows paths, encodings and arbitrary directories cannot be fetched',async t=>{
   const {port}=await fixture(t);
@@ -68,6 +73,7 @@ test('gleichzeitige Verbindungen sind am Server gedeckelt, nicht nur im Kernel-B
   t.after(()=>new Promise(resolve=>{server.closeAllConnections();server.close(resolve);}));
   assert.equal(server.maxConnections,2);
   const port=server.address().port,holders=[net.connect(port,'127.0.0.1'),net.connect(port,'127.0.0.1')];
+  for(const holder of holders)holder.on('error',()=>{});
   await new Promise(resolve=>setTimeout(resolve,150));
   assert.doesNotMatch(await rawExchange(port,'GET / HTTP/1.1\r\nHost: 127.0.0.1:4173\r\n\r\n'),/^HTTP\/1\.1 200 /);
   for(const socket of holders)await new Promise(resolve=>{socket.on('close',resolve);socket.destroy();});
@@ -103,18 +109,6 @@ test('die Subnetzprüfung wird geteilt statt pro Anfrage neu aufgebaut',()=>{
   const many=Array.from({length:9},(_,index)=>lanConfiguration(`192.168.${index}.10`,{[`WLAN${index}`]:[{address:`192.168.${index}.10`,family:'IPv4',internal:false,cidr:`192.168.${index}.10/24`}]}));
   const first=lanBlock(many[0]);for(const lan of many)lanBlock(lan);
   const again=lanBlock(many[0]);assert.notEqual(again,first);assert.equal(again.check('192.168.0.2','ipv4'),true);
-});
-test('die Verbindungsobergrenze des Servers ist messbar, der Kernel-Backlog nicht',async t=>{
-  const assets=await loadAssets(),server=createStaticServer({assets,connectionLimit:2});
-  await new Promise((resolve)=>server.listen(0,'127.0.0.1',resolve));t.after(()=>new Promise((resolve)=>{server.closeAllConnections();server.close(resolve);}));
-  const port=server.address().port;assert.equal(server.maxConnections,2);
-  const holders=[net.connect(port,'127.0.0.1'),net.connect(port,'127.0.0.1')];for(const socket of holders)socket.on('error',()=>{});
-  await new Promise((resolve)=>setTimeout(resolve,100));
-  const third=net.connect(port,'127.0.0.1',()=>third.write('GET / HTTP/1.1\r\nHost: 127.0.0.1:4173\r\nConnection: close\r\n\r\n'));third.on('error',()=>{});
-  const answer=await new Promise((resolve)=>{let value='';third.on('data',(chunk)=>value+=chunk);third.on('close',()=>resolve(value));third.setTimeout(1500,()=>{third.destroy();resolve(value);});});
-  assert.doesNotMatch(answer,/^HTTP\/1\.1 200 /,`dritte Verbindung blieb offen: ${answer.split('\r\n')[0]}`);
-  for(const socket of holders)await new Promise((resolve)=>{socket.on('close',resolve);socket.destroy();});
-  assert.match(await rawExchange(port,'GET / HTTP/1.1\r\nHost: 127.0.0.1:4173\r\nConnection: close\r\n\r\n'),/^HTTP\/1\.1 200 /);
 });
 test('lesson progress renders without inline styles forbidden by the server CSP',()=>{
   const store=createStore(createRepository({getItem:()=>null,setItem:()=>{}}));store.subscribe(()=>{});store.start();
