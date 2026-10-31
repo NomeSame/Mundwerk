@@ -19,7 +19,7 @@ test('ausescapter Freitext bleibt zulässig, unverdächtiges Markup auch', () =>
   assert.equal(markup, `<strong>${esc(word)}</strong>`);
   assert.ok(markup.includes('&lt;amp&gt;') && markup.includes('onclick=&quot;x&quot;'), markup);
 });
-test('fremde und gefährrliche Skript-Adressen werden abgelehnt, die eigene Datei nicht', () => {
+test('fremde und gefährliche Skript-Adressen werden abgelehnt, die eigene Datei nicht', () => {
   assert.equal(String(renderScriptURL('./sw.js')),'./sw.js');
   for(const dangerous of ['javascript:import(1)','https://cdn.example.org/sw.js','//example.org/sw.js','data:text/javascript,1','blob:https://example.org/x'])
     assert.throws(()=>renderScriptURL(dangerous),/Skript-URL abgelehnt/,dangerous);
