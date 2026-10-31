@@ -1,5 +1,6 @@
 import {uiContext} from './context.js';
 import {languageCodes} from '../core/content-direction.js';
+import {usesWholeList,wholeList,pasteSummary} from '../core/translation-paste.js';
 export function bindEvents(root, store, platform) {
   root.addEventListener('click', event => {
     const target = event.target.closest('[data-action]');
@@ -29,6 +30,28 @@ export function bindEvents(root, store, platform) {
   root.addEventListener('input',event=>{
     if(event.target.id==='corrected')store.correctionDraft(event.target.value);
     if(event.target.closest('[data-form="translations"]')&&event.target.name)store.translationDraft(event.target.name,event.target.value);
+  });
+  // Whole list into one field: the line break ends this field, commas keep several meanings.
+  root.addEventListener('paste',event=>{
+    const field=event.target?.closest?.('.meaning-input');
+    const form=field?.form;
+    if(!form||form.dataset.form!=='translations')return;
+    const t=uiContext(store.state).t;
+    const text=event.clipboardData?.getData?.('text/plain')??'';
+    const status=root.querySelector('[data-paste-status]');
+    if(!usesWholeList(text)){if(status)status.textContent=t('pasteSingle');return;}
+    const fields=[...form.querySelectorAll('.meaning-input')];
+    const words=store.state.words.map(item=>({id:item.entry.id,word:item.entry.word}));
+    const list=wholeList(text,words,fields.indexOf(field),Object.fromEntries(fields.map(input=>[input.name,input.value])));
+    if(!list.assigned.length&&!list.left.length&&!list.tooLong.length&&!list.stopped&&!list.oversized)return;
+    event.preventDefault();
+    for(const item of list.assigned){
+      const input=form.querySelector(`[name="${item.id}"]`);
+      if(input)input.value=item.answer;
+      store.translationDraft(item.id,item.answer);
+    }
+    if(status)status.textContent=pasteSummary(list,words.length,t);
+    fields.find(input=>!input.value.trim())?.focus();
   });
   root.addEventListener('change',event=>{
     const languages=event.target.closest('[data-form="languages"]');

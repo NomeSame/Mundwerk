@@ -6,6 +6,7 @@ export const assetPaths=Object.freeze([
   '/data/sentences.js','/data/replies.js','/data/progress.js','/data/pt-vocabulary.js',
   '/data/pt-sentences.js','/data/reply-locales.js','/data/topic-locales.js','/data/meaning-rules.js',
   '/core/content-direction.js','/core/learning.js','/core/matching.js','/core/meaning-search.js',
+  '/core/translation-paste.js',
   '/core/meaning-assessment.js','/core/meaning-policy.js','/data/language-forms.js','/core/reply-assessment.js','/core/session.js','/state/store.js',
   '/ui/view.js','/ui/components.js','/ui/context.js','/ui/messages.js','/ui/assessment.js',
   '/ui/word-review.js','/ui/meaning-review.js','/ui/practice.js','/ui/events.js',
