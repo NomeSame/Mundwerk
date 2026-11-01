@@ -28,6 +28,10 @@ export function bindEvents(root, store, platform) {
     else store.go(action);
   });
   root.addEventListener('input',event=>{
+    if(event.target.id==='words')store.wordDraft(event.target.value);
+    if(event.target.id==='answer')store.answerDraft(event.target.value);
+    const meaningForm=event.target.closest('[data-form="meaning"]');
+    if(meaningForm)store.meaningDraft(meaningForm.dataset.original,event.target.value);
     if(event.target.id==='corrected')store.correctionDraft(event.target.value);
     if(event.target.closest('[data-form="translations"]')&&event.target.name)store.translationDraft(event.target.name,event.target.value);
   });

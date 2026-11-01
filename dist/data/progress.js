@@ -13,6 +13,7 @@ export function validProfile(value) {
     topics.some(topic=>topic.id === value.topic) && validKnown(value.known) && validProgress(value.progress);
 }
 export function createRepository(storage) {
+  let unreadable=false;
   return {
     load() {
       try {
@@ -20,15 +21,16 @@ export function createRepository(storage) {
         if (!raw) return { profile:emptyProfile(), error:'' };
         const profile = JSON.parse(raw);
         if (!validProfile(profile)) throw Error('invalid');
-        return { profile, error:'' };
-      } catch { return { profile:emptyProfile(), error:'loadError' }; }
+        unreadable=false;return { profile, error:'' };
+      } catch { unreadable=true;return { profile:emptyProfile(), error:'loadError' }; }
     },
     save(profile) {
+      if(unreadable)return 'saveError'; // Keep the original data until an explicit reset.
       try { storage.setItem(KEY, JSON.stringify(profile)); return ''; }
       catch { return 'saveError'; }
     },
     reset(){
-      try{storage.removeItem(KEY);return '';}
+      try{storage.removeItem(KEY);unreadable=false;return '';}
       catch{return 'resetError';}
     }
   };

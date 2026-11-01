@@ -1,3 +1,4 @@
+import {checkpoint,resumeCheckpoint,workspaceKey} from './checkpoint.js';
 import {matchWords,mergeCorrections,assessAnswer} from '../core/matching.js';
 import {assessReply} from '../core/reply-assessment.js';
 import {assessIntendedMeaning} from '../core/meaning-assessment.js';
@@ -13,41 +14,63 @@ export function createStore(repository) {
   let {vocabulary,sentences,replies}=directedContent(profile.baseLanguage,profile.targetLanguage);
   if (!['path','word','sentence','reply','spelling'].includes(profile.mode)) profile.mode='path';
   if (![10,20,'all'].includes(profile.length)) profile.length=20;
-  const state={profile,translationAnswers:{},meaningReviews:{},meaningFeedback:[],warning:loaded.error,page:profile.ready?'home':'welcome',round:1,words:[],translated:[],rejected:[],missing:[],cards:[],index:0,revealed:false,checked:false,correct:false,spelling:false,answer:'',sessionCorrect:0,install:false};
+  const state={profile,translationAnswers:{},meaningReviews:{},meaningFeedback:[],warning:loaded.error,page:profile.ready?'home':profile.known.length?'topics':'welcome',round:1,words:[],translated:[],rejected:[],missing:[],cards:[],index:0,revealed:false,checked:false,correct:false,spelling:false,answer:'',sessionCorrect:0,install:false};
+  profile.workspaces=profile.workspaces&&typeof profile.workspaces==='object'&&!Array.isArray(profile.workspaces)?profile.workspaces:{};
+  const restore=()=>{
+    const saved=profile.workspaces[workspaceKey(profile)];
+    if(!saved)return;
+    const restored=resumeCheckpoint(saved,vocabulary,availableCards(profile.topic,vocabulary,sentences,replies),profile.baseLanguage);
+    if(restored)Object.assign(state,restored);else state.warning='resumeError';
+  };
+  restore();
+  const save=(report=false)=>{
+    const previous=state.warning;
+    profile.workspaces={...profile.workspaces,[workspaceKey(profile)]:checkpoint(state)};
+    const error=repository.save(profile);
+    state.warning=error||(state.warning==='saveError'?'':state.warning);
+    if(report&&previous!==state.warning)notify(state);
+  };
   let notify=()=>{};
-  const emit=()=>{
+  const emit=(persist=true)=>{
     state.inventory=availableCards(profile.topic,vocabulary,sentences,replies);
     state.stage=learningStage(state.inventory,profile);
     state.sessionSize=buildSession(state.inventory,profile,profile.mode,profile.length).length;
+    if(persist)save();
     notify(state);
   };
-  const save=()=>{state.warning=repository.save(profile);};
   const setWords=words=>{state.words=words;state.correctionDraft=words.filter(item=>!item.entry).map(item=>item.word).join('\n');state.page='word-check';emit();};
   return {
     state,
-    subscribe(fn){notify=fn;emit();},
+    subscribe(fn){notify=fn;emit(false);},
     go(page){state.page=page;emit();},
-    warn(code){state.warning=code;emit();},
+    warn(code){state.warning=code;emit(false);},
     languages(base,target){
       if(!validPair(base,target)){state.warning='pairError';emit();return false;}
       if(base===profile.baseLanguage&&target===profile.targetLanguage)return true;
       profile.pairs[profile.baseLanguage+'>'+profile.targetLanguage]={known:[...profile.known],meaningEvidence:{...profile.meaningEvidence},progress:{...profile.progress},ready:profile.ready,topic:profile.topic,mode:profile.mode,length:profile.length};
+      save();
       const previous=profile.pairs[base+'>'+target];
       Object.assign(profile,{baseLanguage:base,targetLanguage:target,known:previous?.known??[],meaningEvidence:previous?.meaningEvidence??{},progress:previous?.progress??{},ready:previous?.ready??false,topic:previous?.topic??'alltag',mode:previous?.mode??'path',length:previous?.length??20});
       ({vocabulary,sentences,replies}=directedContent(base,target));
-      Object.assign(state,{page:profile.ready?'home':'welcome',words:[],cards:[],round:1,translated:[],rejected:[],missing:[],correctionDraft:'',translationAnswers:{},meaningReviews:{},meaningFeedback:[],index:0,install:false});save();emit();return true;
+      Object.assign(state,{page:profile.ready?'home':profile.known.length?'topics':'welcome',words:[],cards:[],round:1,translated:[],rejected:[],missing:[],correctionDraft:'',translationAnswers:{},meaningReviews:{},meaningFeedback:[],index:0,install:false,wordDraft:'',answer:'',checked:false,revealed:false,correct:false,spelling:false,retrying:false,formHint:false,modelAnswer:'',sessionCorrect:0});restore();emit();return true;
     },
     reset(){
-      const error=repository.reset();if(error){state.warning=error;emit();return false;}
+      const error=repository.reset();if(error){state.warning=error;emit(false);return false;}
       for(const key of Object.keys(profile))delete profile[key];
       Object.assign(profile,emptyProfile(),{mode:'path',length:20});
       ({vocabulary,sentences,replies}=directedContent());
-      Object.assign(state,{page:'welcome',warning:'',words:[],cards:[],round:1,translated:[],rejected:[],missing:[],correctionDraft:'',translationAnswers:{},meaningReviews:{},meaningFeedback:[],index:0,install:false,answer:'',checked:false,revealed:false,sessionCorrect:0,correct:false,spelling:false});emit();return true;
+      Object.assign(state,{page:'welcome',warning:'',words:[],cards:[],round:1,translated:[],rejected:[],missing:[],correctionDraft:'',translationAnswers:{},meaningReviews:{},meaningFeedback:[],index:0,install:false,answer:'',checked:false,revealed:false,sessionCorrect:0,correct:false,spelling:false,wordDraft:'',retrying:false,formHint:false,modelAnswer:''});emit(false);return true;
     },
-    beginAssessment(){state.words=[];state.round=1;state.rejected=[];state.translationAnswers={};state.meaningReviews={};state.meaningFeedback=[];state.page='known';emit();},
-    words(text){state.round=1;setWords(matchWords(text,vocabulary));},
+    beginAssessment(){state.wordDraft='';state.words=[];state.round=1;state.rejected=[];state.translationAnswers={};state.meaningReviews={};state.meaningFeedback=[];state.page='known';emit();},
+    words(text){state.wordDraft=text;state.round=1;setWords(matchWords(text,vocabulary));},
     correctWords(text){state.round++;setWords(mergeCorrections(state.words,text,vocabulary));},
-    correctionDraft(text){state.correctionDraft=text;},
+    wordDraft(text){state.wordDraft=String(text).slice(0,12000);save(true);},
+    answerDraft(text){state.answer=String(text).slice(0,1000);save(true);},
+    correctionDraft(text){state.correctionDraft=String(text).slice(0,12000);save(true);},
+    meaningDraft(word,text){
+      const item=state.words.find(item=>item.word===word&&!item.entry);
+      if(item){item.meaningHintQuery=String(text).slice(0,200);save(true);}
+    },
     searchMeaning(word,explanation){
       const item=state.words.find(item=>item.word===word&&!item.entry);
       if(!item)return;
@@ -67,7 +90,7 @@ export function createStore(repository) {
       state.words=state.words.filter(item=>{if(!item.entry||seen.has(item.entry.id))return false;seen.add(item.entry.id);return true;});
       state.page=state.words.length?'translations':'topics';emit();return true;
     },
-    translationDraft(id,text){state.translationAnswers[id]=text;},
+    translationDraft(id,text){state.translationAnswers[id]=String(text).slice(0,300);save(true);},
     confirmTranslation(id,canonical){
       if(!state.meaningReviews[id]?.suggestions.some(item=>item.canonical===canonical))return;
       state.translationAnswers[id]=canonical;delete state.meaningReviews[id];emit();
@@ -86,16 +109,16 @@ export function createStore(repository) {
         if(previous?.level!=='exact'||evidence.level==='exact')profile.meaningEvidence[key]=evidence;
       }
       state.missing=state.translated.filter(item=>item.ids.length&&item.ids.length<item.entry.meanings.length);
-      save();state.page=state.missing.length||state.meaningFeedback.length?'insight':'topics';emit();return true;
+      state.page=state.missing.length||state.meaningFeedback.length?'insight':'topics';emit();return true;
     },
     chooseTopic(topic){
       if(!topics.some(item=>item.id===topic))return;
-      profile.topic=topic;profile.ready=true;save();state.page='home';emit();
+      profile.topic=topic;profile.ready=true;state.page='home';emit();
     },
     configure(mode,length){
       if(['path','word','sentence','reply','spelling'].includes(mode))profile.mode=mode;
       if([10,20,'all'].includes(length))profile.length=length;
-      save();emit();
+      emit();
     },
     start(){
       state.retrying=false;
@@ -111,7 +134,7 @@ export function createStore(repository) {
       Object.assign(state,card.kind==='reply'?assessReply(answer,card,profile.targetLanguage):assessAnswer(answer,card.answers,{strictSpelling:card.kind==='spelling'}));
       state.checked=true;state.revealed=true;
       profile.progress=recordAttempt(profile.progress,card.key,state.correct);
-      state.sessionCorrect+=Number(state.correct);save();emit();
+      state.sessionCorrect+=Number(state.correct);emit();
     },
     retryAnswer(){
       if(state.page!=='lesson'||!state.checked||state.correct||state.retrying)return;
@@ -123,6 +146,6 @@ export function createStore(repository) {
       state.index++;state.revealed=false;state.checked=false;state.answer='';state.spelling=false;
       if(state.index>=state.cards.length)state.page='done';emit();
     },
-    install(show){state.install=show;emit();}
+    install(show){state.install=show;emit(false);}
   };
 }

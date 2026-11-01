@@ -17,7 +17,8 @@ test('failed answers remain editable over repeated correction rounds; each check
   store.check('falsch');const before=saves();
   store.check(card.answers[0]);assert.equal(saves(),before);assert.equal(s.correct,false);
   store.retryAnswer();assert.equal(s.answer,'falsch');assert.equal(s.retrying,true);assert.equal(s.revealed,false);
-  store.retryAnswer();assert.equal(saves(),before);
+  const afterEditing=saves();store.retryAnswer();assert.equal(saves(),afterEditing);
+  assert.equal(profile.progress[card.key].attempts,1,'persisting edit state is not an answer attempt');
   store.check('noch falsch');assert.equal(s.correct,false);assert.equal(s.retrying,false);
   store.retryAnswer();store.check(card.answers[0]);
   assert.equal(s.correct,true);assert.equal(s.sessionCorrect,1);
