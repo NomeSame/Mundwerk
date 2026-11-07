@@ -95,6 +95,10 @@ export function createStore(repository) {
       if(!state.meaningReviews[id]?.suggestions.some(item=>item.canonical===canonical))return;
       state.translationAnswers[id]=canonical;delete state.meaningReviews[id];emit();
     },
+    clearTranslations(){
+      state.translationAnswers={};state.meaningReviews={};state.meaningFeedback=[];
+      state.translated=[];state.rejected=[];state.missing=[];emit();
+    },
     translations(answers,skip=false){
       state.translationAnswers={...answers};
       const resolved=state.words.map(item=>({item,review:assessIntendedMeaning(answers[item.entry.id],item,profile.baseLanguage)}));

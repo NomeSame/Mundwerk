@@ -69,3 +69,12 @@ select:focus-visible{outline:3px solid #bd6433;outline-offset:3px}
 }
 
 @media(max-width:380px){.door-art{display:none}.hero-card>div:first-child{max-width:100%}}
+
+/* Bedenklicher Eingriff: alle Bedeutungs-Eingaben leeren */
+.clear-all{border-top:1px solid var(--line);margin-top:38px;padding-top:4px}
+.clear-all .fine{margin:14px 0 16px;max-width:420px}
+.danger-button{display:block;width:auto;min-width:190px;margin-right:auto;background:transparent;border:1px solid #c2705d;border-radius:8px;padding:13px 22px;color:#9b3026;font-size:13px;letter-spacing:.2px}
+.danger-button:hover{background:#f4ded7;border-color:#a43b28}
+.danger-button:active{background:#efcfc5}
+.danger-button:focus-visible{outline-color:#a43b28}
+@media(max-width:640px){.clear-all{margin-top:30px}.danger-button{min-width:210px}}

@@ -115,6 +115,6 @@ test('das neue Modul ist ausgeliefert, offline vorgeladen und maxlength bleibt g
   assert.ok(assetPaths.includes('/core/translation-paste.js'));
   const worker=await readFile(new URL('../dist/sw.js',import.meta.url),'utf8');
   assert.match(worker,/'\.\/core\/translation-paste\.js'/);
-  assert.match(worker,/sprachinseln-static-v1[6-9]/);
+  assert.match(worker,/sprachinseln-static-v(?:1[6-9]|2\d)/,'die Cacheversion steigt mit jeder ausgelieferten Änderung');
   assert.match(await readFile(new URL('../dist/ui/meaning-review.js',import.meta.url),'utf8'),/maxlength="\$\{MAX_ANSWER\}"/);
 });

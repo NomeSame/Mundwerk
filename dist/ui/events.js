@@ -21,6 +21,8 @@ export function bindEvents(root, store, platform) {
     else if (action === 'dont-know') store.check('');
     else if (action === 'skip-translations') {
       if (platform.confirm(uiContext(store.state).t('skipMeaningConfirm'))) store.translations(Object.fromEntries(new FormData(target.closest('form'))), true);
+    } else if (action === 'clear-translations') {
+      if (platform.confirm(uiContext(store.state).t('clearMeaningsConfirm'))) store.clearTranslations();
     } else if (action === 'install') store.install(true);
     else if (action === 'close-install') store.install(false);
     else if (action === 'export') platform.download(store.state.profile);
