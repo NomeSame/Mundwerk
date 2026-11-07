@@ -2,6 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {matchWords,mergeCorrections,correctionReport} from '../dist/core/matching.js';
 import {directedContent} from '../dist/core/content-direction.js';
+import {createStore} from '../dist/state/store.js';
+import {createRepository} from '../dist/data/progress.js';
+import {wordReview} from '../dist/ui/word-review.js';
+import {translationView} from '../dist/ui/meaning-review.js';
+
+const memory=()=>{const map=new Map();return {getItem:key=>map.get(key)??null,setItem:(key,value)=>map.set(key,value),removeItem:key=>map.delete(key)};};
+const open=storage=>{const store=createStore(createRepository(storage));store.subscribe(()=>{});return store;};
+const labels=html=>[...html.matchAll(/<label for="t-[^"]+">([^*<]+)/g)].map(match=>match[1]);
 
 const {vocabulary} = directedContent('de', 'es');
 // Prompt 2026-11-01: the translation round must follow the position the user typed.
@@ -111,4 +119,73 @@ test('position keeping behaves identically in all six language directions', () =
     assert.deepEqual(fixed.map(item => [item.entry?.word, item.slot]), [[third, 1], [first, 2]], `${base}->${target}: refill happens where the open word stood`);
     assert.ok(fixed.every(item => item.entry), `${base}->${target}`);
   }
+});
+
+
+test('the meaning round asks for translations in the typed order, without visible numbers', () => {
+  const store=open(memory());
+  store.words(userList);
+  store.correctWords('te quiero, lavarte, cinco, aventura');
+  assert.equal(store.state.correctionDraft,'');
+  assert.equal(store.acceptWords(),true);
+  assert.equal(store.state.page,'translations');
+  const html=translationView(store.state);
+  const asked=labels(html);
+  assert.equal(asked.length,67,'every recognized word is asked for');
+  assert.deepEqual([asked[0],asked[16],asked[33],asked[66]],['hola','te quiero','cinco','amigo']);
+  assert.ok(asked.every(label=>!/^\s*\d/.test(label)),'positions are never printed');
+  assert.ok(!html.includes('data-slot'),'slots stay internal');
+});
+
+test('the pending list and the pre-filled correction draft follow the typed order', () => {
+  const store=open(memory());
+  store.words('hola, sinque, perro, adventura, lavate');
+  assert.deepEqual(store.state.words.map(item=>item.slot),[1,2,3,4,5]);
+  assert.equal(store.state.correctionDraft,'sinque\nadventura\nlavate');
+  const html=wordReview(store.state);
+  const pending=[...html.matchAll(/<li class="unrecognized[^>]*>[\s\S]*?<strong>([^<]+)<\/strong>/g)].map(match=>match[1]);
+  assert.deepEqual(pending,['sinque','adventura','lavate']);
+  assert.ok(!html.includes('data-slot'));
+});
+
+test('a correction reports additions in the interface language', () => {
+  for (const [locale,target,phrase] of [['de','es','Neu aufgenommen'],['es','de','Añadido'],['pt-BR','es','Adicionado']]) {
+    const store=open(memory());
+    store.languages(locale,target);
+    const content=directedContent(locale,target);
+    // The rewrite stays unrecognized, so the extra line must be reported as an addition.
+    store.words(`${content.vocabulary[0].word}, querwortxyz`);
+    store.correctWords('querwortxyzq, '+content.vocabulary[1].word);
+    assert.deepEqual(store.state.mergeReport,{added:[content.vocabulary[1].word],dropped:[]},locale);
+    const html=wordReview(store.state);
+    assert.ok(html.includes('data-merge-report'),locale);
+    assert.ok(html.includes(phrase),locale);
+    assert.deepEqual(html.match(/data-merge-report[^>]*>([^<]*)/)[1],`${phrase}: ${content.vocabulary[1].word}.`,locale);
+  }
+});
+
+test('positions survive a reload, including the gap left by a dropped word', () => {
+  const storage=memory();
+  let store=open(storage);
+  store.words('hola, lavate, sinque, perro, adventura');
+  store.correctWords('lavarte, adventura');
+  assert.deepEqual(store.state.words.map(item=>[item.word,item.slot]),[['hola',1],['lavarte',2],['perro',4],['adventura',5]]);
+  assert.deepEqual(store.state.mergeReport,{added:[],dropped:['sinque']});
+  store=open(storage);
+  assert.equal(store.state.page,'word-check');
+  assert.equal(store.state.round,2);
+  assert.deepEqual(store.state.words.map(item=>[item.word,item.entry?.word??null,item.slot]),
+    [['hola','hola',1],['lavarte','lavarte',2],['perro','perro',4],['adventura',null,5]]);
+  assert.equal(store.state.correctionDraft,'adventura','the still open word is offered again at its place');
+  assert.equal(store.state.mergeReport,null,'one-shot feedback is not replayed after reload');
+});
+
+test('a reopened session keeps filling the old positions instead of appending again', () => {
+  const storage=memory();
+  let store=open(storage);
+  store.words('hola, trabacho, dia');
+  store=open(storage);
+  assert.deepEqual(store.state.words.map(item=>item.slot),[1,2,3]);
+  store.correctWords('trabajo');
+  assert.deepEqual(store.state.words.map(item=>[item.entry?.word,item.slot]),[['hola',1],['trabajo',2],['día',3]]);
 });

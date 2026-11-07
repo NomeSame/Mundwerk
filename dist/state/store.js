@@ -1,5 +1,5 @@
 import {checkpoint,resumeCheckpoint,workspaceKey} from './checkpoint.js';
-import {matchWords,mergeCorrections,assessAnswer} from '../core/matching.js';
+import {matchWords,mergeCorrections,correctionReport,assessAnswer} from '../core/matching.js';
 import {assessReply} from '../core/reply-assessment.js';
 import {assessIntendedMeaning} from '../core/meaning-assessment.js';
 import {findByMeaning} from '../core/meaning-search.js';
@@ -14,7 +14,7 @@ export function createStore(repository) {
   let {vocabulary,sentences,replies}=directedContent(profile.baseLanguage,profile.targetLanguage);
   if (!['path','word','sentence','reply','spelling'].includes(profile.mode)) profile.mode='path';
   if (![10,20,'all'].includes(profile.length)) profile.length=20;
-  const state={profile,translationAnswers:{},meaningReviews:{},meaningFeedback:[],warning:loaded.error,page:profile.ready?'home':profile.known.length?'topics':'welcome',round:1,words:[],translated:[],rejected:[],missing:[],cards:[],index:0,revealed:false,checked:false,correct:false,spelling:false,answer:'',sessionCorrect:0,install:false};
+  const state={profile,translationAnswers:{},meaningReviews:{},meaningFeedback:[],warning:loaded.error,page:profile.ready?'home':profile.known.length?'topics':'welcome',round:1,words:[],translated:[],rejected:[],missing:[],cards:[],index:0,revealed:false,checked:false,correct:false,spelling:false,answer:'',sessionCorrect:0,install:false,mergeReport:null};
   profile.workspaces=profile.workspaces&&typeof profile.workspaces==='object'&&!Array.isArray(profile.workspaces)?profile.workspaces:{};
   const restore=()=>{
     const saved=profile.workspaces[workspaceKey(profile)];
@@ -38,7 +38,7 @@ export function createStore(repository) {
     if(persist)save();
     notify(state);
   };
-  const setWords=words=>{state.words=words;state.correctionDraft=words.filter(item=>!item.entry).map(item=>item.word).join('\n');state.page='word-check';emit();};
+  const setWords=items=>{state.words=items;state.correctionDraft=items.filter(item=>!item.entry).map(item=>item.word).join('\n');state.page='word-check';emit();};
   return {
     state,
     subscribe(fn){notify=fn;emit(false);},
@@ -52,18 +52,18 @@ export function createStore(repository) {
       const previous=profile.pairs[base+'>'+target];
       Object.assign(profile,{baseLanguage:base,targetLanguage:target,known:previous?.known??[],meaningEvidence:previous?.meaningEvidence??{},progress:previous?.progress??{},ready:previous?.ready??false,topic:previous?.topic??'alltag',mode:previous?.mode??'path',length:previous?.length??20});
       ({vocabulary,sentences,replies}=directedContent(base,target));
-      Object.assign(state,{page:profile.ready?'home':profile.known.length?'topics':'welcome',words:[],cards:[],round:1,translated:[],rejected:[],missing:[],correctionDraft:'',translationAnswers:{},meaningReviews:{},meaningFeedback:[],index:0,install:false,wordDraft:'',answer:'',checked:false,revealed:false,correct:false,spelling:false,retrying:false,formHint:false,modelAnswer:'',sessionCorrect:0});restore();emit();return true;
+      Object.assign(state,{page:profile.ready?'home':profile.known.length?'topics':'welcome',words:[],cards:[],round:1,translated:[],rejected:[],missing:[],mergeReport:null,correctionDraft:'',translationAnswers:{},meaningReviews:{},meaningFeedback:[],index:0,install:false,wordDraft:'',answer:'',checked:false,revealed:false,correct:false,spelling:false,retrying:false,formHint:false,modelAnswer:'',sessionCorrect:0});restore();emit();return true;
     },
     reset(){
       const error=repository.reset();if(error){state.warning=error;emit(false);return false;}
       for(const key of Object.keys(profile))delete profile[key];
       Object.assign(profile,emptyProfile(),{mode:'path',length:20});
       ({vocabulary,sentences,replies}=directedContent());
-      Object.assign(state,{page:'welcome',warning:'',words:[],cards:[],round:1,translated:[],rejected:[],missing:[],correctionDraft:'',translationAnswers:{},meaningReviews:{},meaningFeedback:[],index:0,install:false,answer:'',checked:false,revealed:false,sessionCorrect:0,correct:false,spelling:false,wordDraft:'',retrying:false,formHint:false,modelAnswer:''});emit(false);return true;
+      Object.assign(state,{page:'welcome',warning:'',words:[],cards:[],round:1,translated:[],rejected:[],missing:[],mergeReport:null,correctionDraft:'',translationAnswers:{},meaningReviews:{},meaningFeedback:[],index:0,install:false,answer:'',checked:false,revealed:false,sessionCorrect:0,correct:false,spelling:false,wordDraft:'',retrying:false,formHint:false,modelAnswer:''});emit(false);return true;
     },
-    beginAssessment(){state.wordDraft='';state.words=[];state.round=1;state.rejected=[];state.translationAnswers={};state.meaningReviews={};state.meaningFeedback=[];state.page='known';emit();},
-    words(text){state.wordDraft=text;state.round=1;setWords(matchWords(text,vocabulary));},
-    correctWords(text){state.round++;setWords(mergeCorrections(state.words,text,vocabulary));},
+    beginAssessment(){state.wordDraft='';state.words=[];state.round=1;state.rejected=[];state.translationAnswers={};state.meaningReviews={};state.meaningFeedback=[];state.mergeReport=null;state.page='known';emit();},
+    words(text){state.wordDraft=text;state.round=1;state.mergeReport=null;setWords(matchWords(text,vocabulary));},
+    correctWords(text){state.round++;const merged=mergeCorrections(state.words,text,vocabulary);state.mergeReport=correctionReport(state.words,merged);setWords(merged);},
     wordDraft(text){state.wordDraft=String(text).slice(0,12000);save(true);},
     answerDraft(text){state.answer=String(text).slice(0,1000);save(true);},
     correctionDraft(text){state.correctionDraft=String(text).slice(0,12000);save(true);},

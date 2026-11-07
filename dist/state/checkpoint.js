@@ -11,7 +11,7 @@ export const workspaceKey=profile=>profile.baseLanguage+'>'+profile.targetLangua
 export function checkpoint(state){
   const learning=['lesson','done'].includes(state.page);
   return {version:1,page:state.page,wordDraft:state.wordDraft??'',correctionDraft:state.correctionDraft??'',
-    words:intake.includes(state.page)?state.words.map(item=>({word:item.word,assigned:item.status==='meaning'?item.entry.id:null,hint:item.meaningHintQuery??'',searched:Boolean(item.meaningSearched)})):[],
+    words:intake.includes(state.page)?state.words.map(item=>({word:item.word,slot:Number.isSafeInteger(item.slot)&&item.slot>0?item.slot:null,assigned:item.status==='meaning'?item.entry.id:null,hint:item.meaningHintQuery??'',searched:Boolean(item.meaningSearched)})):[],
     translationAnswers:state.translationAnswers,reviewed:Object.keys(state.meaningReviews).length>0,
     round:state.round,cards:learning?state.cards.map(card=>card.key):[],index:learning?state.index:0,
     answer:learning?state.answer:'',checked:learning&&state.checked,correct:learning&&state.correct,
@@ -32,9 +32,11 @@ export function resumeCheckpoint(saved,vocabulary,inventory,locale){
   const entries=new Map(vocabulary.map(entry=>[entry.id,entry]));
   const words=[];
   for(const row of saved.words){
-    if(!object(row)||!text(row.word,12000)||!row.word||!(row.assigned===null||typeof row.assigned==='string')||!text(row.hint??'',200)||!(row.searched===undefined||typeof row.searched==='boolean'))return null;
+    if(!object(row)||!text(row.word,12000)||!row.word||!(row.assigned===null||typeof row.assigned==='string')||!text(row.hint??'',200)||!(row.searched===undefined||typeof row.searched==='boolean')||!(row.slot===undefined||row.slot===null||whole(row.slot,6000)))return null;
     const record=matchWords(row.word,vocabulary)[0];
     if(!record)return null;
+    // The stored order is the intake order; an explicit slot also keeps gaps from dropped words.
+    record.slot=row.slot??words.length+1;
     record.meaningHintQuery=row.hint??'';record.meaningSearched=Boolean(row.searched);
     if(record.meaningSearched)record.meaningResults=findByMeaning(record.meaningHintQuery,vocabulary);
     if(row.assigned!==null){
