@@ -41,7 +41,10 @@ test('correction editor contains only unresolved inputs; recognized words surviv
   assert.equal(editor,'trabacho');
   s.correctWords('trabajo, día');
   assert.equal(s.state.round,2);
-  assert.deepEqual(s.state.words.map(w=>w.entry.id),['hola','perro','dia','trabajo']);
+  // Erwartung bewusst geändert (2026-11-01, Nutzeranweisung zur Positionstreue): die Korrektur
+  // füllt den Platz des offenen Wortes und hängt sich nicht am Ende an. 'trabacho' war
+  // Eingabe-Position 3, 'dia' Position 4 — früher stand 'trabajo' am Ende.
+  assert.deepEqual(s.state.words.map(w=>w.entry.id),['hola','perro','trabajo','dia']);
   assert.equal(s.acceptWords(),true); assert.equal(s.state.page,'translations');
 });
 test('removing all unresolved words does not remove recognized ones or add duplicates',()=>{
