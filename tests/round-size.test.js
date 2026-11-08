@@ -4,6 +4,7 @@ import {vocabulary} from '../dist/data/vocabulary.js';
 import {sentences} from '../dist/data/sentences.js';
 import {replies} from '../dist/data/replies.js';
 import {availableCards,buildSession,roundSize,MAX_ROUND} from '../dist/core/session.js';
+import {MAX_ROUND as modelMaxRound,roundSize as modelRoundSize} from '../dist/model/practice.js';
 import {createRepository,emptyProfile,validProfile} from '../dist/data/progress.js';
 import {createStore} from '../dist/state/store.js';
 import {practiceSettings} from '../dist/ui/practice.js';
@@ -14,6 +15,8 @@ const open=storage=>{const store=createStore(createRepository(storage));store.su
 
 test('the round size is freely pickable from one to the single declared maximum',()=>{
   assert.equal(MAX_ROUND,30);
+  assert.equal(modelMaxRound,MAX_ROUND);
+  assert.equal(modelRoundSize(7),7);
   for(const size of [1,2,3,7,19,29,30]){
     assert.equal(buildSession(cards,emptyProfile(),'word',size).length,Math.min(size,cards.word.length),String(size));
     assert.equal(buildSession(cards,emptyProfile(),'path',size).length,Math.min(size,cards.word.length+cards.sentence.length+cards.reply.length),String(size));

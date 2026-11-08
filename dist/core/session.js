@@ -1,5 +1,7 @@
 import {learningCards} from './learning.js';
 import {normalize,foldLetters} from './matching.js';
+import {MAX_ROUND,roundSize} from '../model/practice.js';
+export {MAX_ROUND,roundSize} from '../model/practice.js';
 export function availableCards(topic, vocabulary, sentences, replies) {
   return {
     word:learningCards(topic,vocabulary).map(card=>({...card,kind:'word',prompt:card.meaning.answers[0],answers:[...new Set([card.entry.word,...(card.entry.aliases??[])])],note:card.meaning.note ?? card.entry.note})),
@@ -13,13 +15,6 @@ export function learningStage(cards, profile) {
   if (cards.sentence.filter(card=>mastered(card,profile)).length >= 2) return 'reply';
   if (cards.word.filter(card=>mastered(card,profile)).length >= Math.min(4,cards.word.length)) return 'sentence';
   return 'word';
-}
-// One number for the whole product: how large a practice round may be by choice.
-export const MAX_ROUND = 30;
-export function roundSize(value, fallback = 20) {
-  if (value === 'all') return 'all';
-  const size = Number(value);
-  return Number.isInteger(size) && size >= 1 ? Math.min(MAX_ROUND, size) : fallback;
 }
 export function buildSession(cards, profile, mode = 'path', length = 20) {
   const size = roundSize(length, 20);

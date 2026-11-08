@@ -1,6 +1,6 @@
 import {topics} from './topics.js';
 import {validPair} from '../core/content-direction.js';
-import {MAX_ROUND} from '../core/session.js';
+import {MAX_ROUND} from '../model/practice.js';
 const KEY = 'sprachinseln.v1';
 export const emptyProfile = () => ({ version:1, ready:false, topic:'alltag', known:[], progress:{},baseLanguage:'de',targetLanguage:'es',pairs:{},meaningEvidence:{} });
 const validProgress=progress=>progress&&typeof progress==='object'&&!Array.isArray(progress)&&Object.values(progress).every(item=>item&&Number.isSafeInteger(item.attempts)&&item.attempts>=0&&Number.isSafeInteger(item.correct)&&item.correct>=0&&item.correct<=item.attempts&&typeof item.lastCorrect==='boolean');

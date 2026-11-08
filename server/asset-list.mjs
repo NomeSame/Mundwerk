@@ -1,7 +1,7 @@
 // Explicit allowlist: new files in dist are NOT exposed automatically.
 export const assetPaths=Object.freeze([
   '/index.html','/styles.css','/main.js','/sw.js','/manifest.webmanifest',
-  '/icon.svg','/icon-192.png','/icon-512.png','/model/content.js',
+  '/icon.svg','/icon-192.png','/icon-512.png','/model/content.js','/model/practice.js',
   '/data/vocabulary.js','/data/market-content.js','/data/topics.js','/data/lexicon.js',
   '/data/sentences.js','/data/replies.js','/data/progress.js','/data/pt-vocabulary.js',
   '/data/pt-sentences.js','/data/reply-locales.js','/data/topic-locales.js','/data/meaning-rules.js',
