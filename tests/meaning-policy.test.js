@@ -7,6 +7,7 @@ import {matchWords,assessAnswer} from '../dist/core/matching.js';
 import {createStore} from '../dist/state/store.js';
 import {createRepository,validProfile} from '../dist/data/progress.js';
 import {buildSession} from '../dist/core/session.js';
+import {translator} from '../dist/ui/messages.js';
 function review(word,answer,base='de',target='es'){
   const record=matchWords(word,directedContent(base,target).vocabulary)[0];assert.ok(record.entry,word);
   return assessIntendedMeaning(answer,record,base);
@@ -52,6 +53,39 @@ test('concept policy does not erase negations, content objects, quantities or fa
   assert.equal(review('ich liebe dich','quiero','es','de').status,'unrecognized');
   assert.equal(assessAnswer('lavar',['lavarte']).correct,false);
   assert.equal(assessAnswer('125 ml de vino',['250 ml de vino']).correct,false);
+});
+test('the other ordinary wording of a noted phrase is known meaning, not a new meaning',()=>{
+  for(const [answer,canonical]of [['ich würde gerne','ich würde gern'],['ich hätte gerne','ich hätte gern'],['ich möchte gerne','ich möchte gern']]){
+    const result=review('me gustaría',answer);assert.equal(result.status,'accepted',answer);
+    assert.deepEqual(result.unmatched,[],answer);assert.equal(result.feedback.length,1,answer);
+    assert.equal(result.feedback[0].reason,'wording',answer);assert.equal(result.feedback[0].level,'accepted',answer);
+    assert.equal(result.feedback[0].canonical,canonical,answer);
+  }
+  assert.equal(review('me gustaría','ich würde gern').feedback.length,0);
+  const note=review('me gustaría','ich würde gerne').feedback[0];
+  for(const [locale,phrase]of [['de','meint dasselbe wie ich würde gern'],['es','significa lo mismo que ich würde gern'],['pt-BR','significa o mesmo que ich würde gern']]){
+    assert.ok(translator(locale)('meaningwording',{answer:note.answer,canonical:note.canonical}).includes(phrase),locale);
+  }
+  const combined=review('me gustaría','ich würde gerne, ich hätte gerne');
+  assert.equal(combined.status,'accepted');assert.deepEqual(combined.unmatched,[]);
+});
+test('wording tolerance never opens the door to single words, other word order or negation',()=>{
+  assert.equal(assessCoreMeaning('gerne',{answers:['gern']},'de'),null);
+  for(const wrong of ['gern','gerne','ich würde gerne nicht','ich hätte nichts gerne','du würdest gerne','gerne ich würde'])assert.notEqual(review('me gustaría',wrong).status,'accepted',wrong);
+  assert.notEqual(review('gracias','gerne').status,'accepted');
+  assert.notEqual(review('me gustaría','ich würde fast gerne').status,'accepted');
+});
+test('wording evidence stays valid on disk and counts as meaning knowledge, not as a loose hint',()=>{
+  let saved=null;const storage={getItem:()=>saved,setItem:(_,value)=>{saved=value;},removeItem:()=>{saved=null;}};
+  const s=createStore(createRepository(storage));s.words('me gustaría');s.acceptWords();
+  assert.equal(s.translations({'me-gustaria':'ich würde gerne'}),true);
+  assert.equal(s.state.profile.meaningEvidence['me-gustaria:me-gustaria'].reason,'wording');
+  assert.ok(validProfile(s.state.profile));
+  const reloaded=createStore(createRepository(storage));
+  assert.equal(reloaded.state.profile.meaningEvidence['me-gustaria:me-gustaria'].level,'accepted');
+  const cards={word:[{key:'full'},{key:'me-gustaria:me-gustaria'}],sentence:[],reply:[],spelling:[]};
+  const profile={...s.state.profile,known:[...s.state.profile.known,'full']};
+  assert.notEqual(buildSession(cards,profile,'word','all')[0].key,'me-gustaria:me-gustaria');
 });
 test('partial concepts persist as known foundations but remain unmastered and prioritized',()=>{
   let saved=null;const storage={getItem:()=>saved,setItem:(_,value)=>{saved=value;},removeItem:()=>{saved=null;}};

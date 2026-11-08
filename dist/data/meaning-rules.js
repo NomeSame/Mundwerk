@@ -12,6 +12,10 @@ export const meaningRules={
     es:[rule('yo también','context','también')],
     'pt-BR':[rule('eu também','context','também')]
   },
+  // Das Zeitwort heißt Nachmittag. „Tag“ überlappt nur im Gruß („buenas tardes“) und gilt
+  // deshalb als teilweise verstanden; die genaue Form bleibt beim Üben offen.
+  'tarde:tarde':{de:[rule('am Nachmittag','context','Nachmittag'),rule('nachmittags','context','Nachmittag'),rule('Tag','concept','Nachmittag','partial'),rule('Tage','concept','Nachmittag','partial')]},
+  'tardes:tardes':{de:[rule('am Nachmittag','context','Nachmittage'),rule('nachmittags','context','Nachmittage'),rule('Tag','concept','Nachmittage','partial'),rule('Tage','concept','Nachmittage','partial')]},
   'puta:puta':{
     de:[rule('Schlampe','register','Hure'),rule('Prostituierte','register','Hure')],
     es:[rule('zorra','register','puta')],

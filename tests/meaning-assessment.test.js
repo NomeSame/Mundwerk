@@ -52,6 +52,32 @@ test('partial number knowledge remains prioritized for practice',()=>{
   const profile={known:['full','partial'],progress:{},meaningEvidence:{partial:{level:'partial'}}};
   assert.equal(buildSession(cards,profile,'word','all')[0].key,'partial');
 });
+test('the afternoon word credits the everyday overlap without renaming its dictionary meaning',()=>{
+  for(const [word,answer,canonical]of [['tardes','Tag','Nachmittage'],['tardes','Tage','Nachmittage'],['tarde','Tag','Nachmittag'],['tarde','Tage','Nachmittag']]){
+    const result=review(word,answer);assert.equal(result.status,'accepted',word+': '+answer);
+    assert.equal(result.feedback[0].reason,'concept',word+': '+answer);
+    assert.equal(result.feedback[0].level,'partial',word+': '+answer);
+    assert.equal(result.feedback[0].canonical,canonical,word+': '+answer);
+  }
+  for(const answer of ['am Nachmittag','nachmittags']){
+    const result=review('tardes',answer);assert.equal(result.status,'accepted',answer);
+    assert.equal(result.feedback[0].reason,'context',answer);assert.equal(result.feedback[0].level,'accepted',answer);
+  }
+  assert.equal(review('tardes','Nachmittag').feedback[0].reason,'number');
+  assert.equal(review('tardes','Nachmittage').feedback.length,0);
+  for(const wrong of ['Abend','Nacht','Morgen','Tag und Nacht','spanischer Nachmittag'])assert.notEqual(review('tardes',wrong).status,'accepted',wrong);
+  assert.notEqual(review('dia','Nachmittag').status,'accepted');
+});
+test('partial overlap keeps the wordcard in practice while a whole phrase is mastered',()=>{
+  const storage=memory(),s=createStore(createRepository(storage));s.words('tardes,me gustaría');s.acceptWords();
+  assert.equal(s.translations({tardes:'Tag','me-gustaria':'ich würde gerne'}),true);
+  assert.equal(s.state.profile.meaningEvidence['tardes:tardes'].level,'partial');
+  assert.equal(s.state.profile.meaningEvidence['me-gustaria:me-gustaria'].level,'accepted');
+  assert.ok(validProfile(s.state.profile));
+  const cards={word:[{key:'full'},{key:'tardes:tardes'},{key:'me-gustaria:me-gustaria'}],sentence:[],reply:[],spelling:[]};
+  const profile={...s.state.profile,known:[...s.state.profile.known,'full']};
+  assert.equal(buildSession(cards,profile,'word','all')[0].key,'tardes:tardes');
+});
 test('malformed evidence is rejected while legacy profiles stay valid',()=>{
   const s=createStore(createRepository(memory()));assert.ok(validProfile(s.state.profile));
   assert.equal(validProfile({...s.state.profile,meaningEvidence:{bad:{level:'anything'}}}),false);

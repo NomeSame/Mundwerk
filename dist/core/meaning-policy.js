@@ -1,5 +1,5 @@
 import {normalizeAnswer,foldLetters} from './matching.js';
-import {verbLexemes,irregularVerbs,nounParadigms,relatedConcepts} from '../data/language-forms.js';
+import {verbLexemes,irregularVerbs,nounParadigms,relatedConcepts,wordingVariants} from '../data/language-forms.js';
 const key=value=>foldLetters(normalizeAnswer(value));
 const articles={de:/^(?:der|die|das|ein|eine|einen|einem|einer) /u,es:/^(?:el|la|los|las|un|una|unos|unas) /u,'pt-BR':/^(?:o|a|os|as|um|uma|uns|umas) /u};
 const pronouns={de:new Set('ich du er sie es wir ihr mich dich sich uns euch mir dir ihnen'.split(' ')),es:new Set('yo tu usted nosotros nosotras vosotros vosotras ustedes el ella ellos ellas'.split(' ')),'pt-BR':new Set('eu tu voce ele ela nos vos voces eles elas me se'.split(' '))};
@@ -60,11 +60,29 @@ function sameNumber(input,answer,locale){
   // Conservative productive plural: vowel + s only. No guessed stems or fuzzy endings.
   return a.length>=3&&/[aeiou]$/u.test(a)&&b===a+'s'||b.length>=3&&/[aeiou]$/u.test(b)&&a===b+'s';
 }
+const wordingAlias=Object.fromEntries(Object.entries(wordingVariants).map(([locale,groups])=>[locale,new Map(groups.flatMap(group=>group.map(word=>[key(word),key(group[0])])))]));
+// „ich würde gerne“ statt der notierten Antwort „ich würde gern": nachweisbar derselbe
+// Satz, nur mit der anderen üblichen Endung. Nur ganze Redewendungen vergleichen, damit
+// kein Einzelwort über diese Tür angenommen wird und kein Teilstring zählt.
+function sameWording(input,answer,locale){
+  const map=wordingAlias[locale];if(!map?.size)return false;
+  const strip=value=>key(value).replace(articles[locale],'').split(' ').filter(Boolean);
+  const wanted=strip(answer),given=strip(input);
+  if(wanted.length<2||wanted.length!==given.length)return false;
+  let differs=false;
+  for(let index=0;index<wanted.length;index++){
+    if(wanted[index]===given[index])continue;
+    if(!map.has(wanted[index])||!map.has(given[index])||map.get(wanted[index])!==map.get(given[index]))return false;
+    differs=true;
+  }
+  return differs;
+}
 export function assessCoreMeaning(input,meaning,locale){
   if(!['de','es','pt-BR'].includes(locale)||negative.test(key(input)))return null;
   for(const answer of meaning.answers){
     const candidate=key(input),expected=key(answer);if(!candidate||!expected)continue;
     if(candidate.replace(articles[locale],'')===expected.replace(articles[locale],''))return {level:'accepted',reason:'context',canonical:answer};
+    if(sameWording(input,answer,locale))return {level:'accepted',reason:'wording',canonical:answer};
     if(relatedConcepts[locale].some(group=>{
       const contains=value=>group.some(member=>key(member)===value||paradigms[locale].some(paradigm=>key(member)===key(paradigm.lemma)&&paradigm.forms.has(core(value,locale))));
       return contains(candidate)&&contains(expected);

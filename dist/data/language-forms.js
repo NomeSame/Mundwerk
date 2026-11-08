@@ -21,3 +21,11 @@ export const relatedConcepts={
   es:[['amor','amar','cariño','te quiero','te amo'],['trabajo','trabajar'],['ayuda','ayudar'],['sueño','dormir'],['pago','pagar'],['pedido','pedir']],
   'pt-BR':[['amor','amar','carinho','eu te amo','gosto de você'],['trabalho','trabalhar'],['ajuda','ajudar'],['sono','dormir'],['pagamento','pagar'],['pedido','pedir']]
 };
+
+// Dieselbe Sache, nur mit der anderen üblichen Endung: „gern“ und „gerne“.
+// Nur vollständige Redewendungen werden darüber erkannt, kein Einzelwort.
+export const wordingVariants={
+  de:[['gern','gerne']],
+  es:[],
+  'pt-BR':[]
+};
