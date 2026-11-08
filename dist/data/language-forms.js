@@ -11,13 +11,44 @@ export const irregularVerbs={
   'pt-BR':{ser:'sou é és somos sois são era eram foi foram sido',estar:'estou está estás estamos estais estão estava estavam estado',ir:'vou vai vais vamos ides vão ia iam ido',ter:'tenho tem tens temos tendes têm tinha tinham tido',querer:'quero quer queres queremos quereis querem queria queriam querido',dar:'dou dá dás damos dais dão dado',ler:'leio lê lês lemos ledes leem lido',ver:'vejo vê vês vemos vedes veem visto',vir:'venho vem vens vimos vindes vêm vindo',pedir:'peço pede pedes pedimos pedis pedem pedido',dormir:'durmo dorme dormes dormimos dormis dormem dormido'}
 };
 export const nounParadigms={
-  de:[['Hand','Hände'],['Bruder','Brüder','Geschwister'],['Nacht','Nächte'],['Nachmittag','Nachmittage'],['Jahr','Jahre'],['Ei','Eier'],['Schuh','Schuhe'],['Kartoffel','Kartoffeln'],['Mann','Männer'],['Frau','Frauen'],['Kind','Kinder'],['Apfel','Äpfel'],['Buch','Bücher'],['Haus','Häuser'],['Glas','Gläser'],['Sohn','Söhne'],['Tochter','Töchter'],['Mutter','Mütter'],['Vater','Väter'],['Arzt','Ärzte'],['Zug','Züge'],['Stadt','Städte'],['Wort','Wörter','Worte'],['Tag','Tage'],['Stunde','Stunden'],['Tisch','Tische'],['Flasche','Flaschen'],['Gang','Gänge'],['Korb','Körbe']],
+  de:[['Hand','Hände'],['Bruder','Brüder','Geschwister'],['Nacht','Nächte'],['Nachmittag','Nachmittage'],['Jahr','Jahre'],['Ei','Eier'],['Schuh','Schuhe'],['Kartoffel','Kartoffeln'],['Mann','Männer'],['Frau','Frauen'],['Kind','Kinder'],['Apfel','Äpfel'],['Buch','Bücher'],['Haus','Häuser'],['Glas','Gläser'],['Sohn','Söhne'],['Tochter','Töchter'],['Mutter','Mütter'],['Vater','Väter'],['Arzt','Ärzte'],['Zug','Züge'],['Stadt','Städte'],['Wort','Wörter','Worte'],['Tag','Tage'],['Stunde','Stunden'],['Tisch','Tische'],['Flasche','Flaschen'],['Gang','Gänge'],['Korb','Körbe'],['Bahnhof','Bahnhöfe']],
   es:[['mano','manos'],['hermano','hermanos'],['noche','noches'],['tarde','tardes'],['año','años'],['huevo','huevos'],['zapato','zapatos'],['patata','patatas'],['país','países'],['luz','luces']],
   'pt-BR':[['mão','mãos'],['irmão','irmãos'],['noite','noites'],['tarde','tardes'],['ano','anos'],['ovo','ovos'],['sapato','sapatos'],['batata','batatas'],['pão','pães'],['cão','cães'],['homem','homens'],['alemão','alemães'],['país','países']]
 };
 // Related concepts are partial evidence, not claims that all forms are translations.
+// Eine Gruppe ist eine Sprachebene, kein Karteikarten-Eintrag: jedes notierte Wort der
+// Gruppe und jedes Alltagssynonym dazu zählen zusammen. Wer ein Gruppenwort passend
+// antwortet, gilt als teilweise verstanden (orange) und übt die notierte Form weiter.
+// Nur gepflegte Einträge hier — keine automatische Semantik, keine Teilstrings.
 export const relatedConcepts={
-  de:[['Liebe','lieben','Zuneigung','ich liebe dich','ich habe dich lieb'],['Arbeit','arbeiten'],['Hilfe','helfen'],['Schlaf','schlafen'],['Zahlung','bezahlen'],['Bestellung','bestellen']],
+  de:[
+    ['Liebe','lieben','Zuneigung','ich liebe dich','ich habe dich lieb'],['Arbeit','arbeiten'],
+    ['Hilfe','helfen'],['Schlaf','schlafen'],['Zahlung','bezahlen'],['Bestellung','bestellen'],
+    // Menschen und Familie: umgangssprachliche Wörter für dieselbe Person.
+    ['Freund','Freundin','Kumpel','Kumpelin','Kollege','Kollegin'],
+    ['Mutter','Mama','Mutti'],['Vater','Papa','Papi'],
+    ['Mann','Mensch','Person','Typ'],['Frau','Ehefrau','Gattin'],
+    ['Junge','Bub'],['Mädchen','Mädel'],['Familie','Verwandte','Angehörige'],
+    ['Partner','Partnerin','Lebensgefährte','Lebensgefährtin'],['Paar','Beziehung','Partnerschaft'],
+    ['Arzt','Ärztin','Doktor','Mediziner'],
+    // Essen, Trinken, Zuhause: naheliegende Alltagswörter.
+    ['Essen','Speise','Gericht','Mahlzeit'],['Öl','Speiseöl'],
+    ['Hähnchen','Huhn','Hühnchen','Poulet','Hendl'],
+    ['Tasse','Becher'],['Glas','Trinkglas','Becher'],['Tisch','Esstisch'],
+    // Unterwegs, Einkaufen, Stadt.
+    ['Zug','Bahn','Eisenbahn'],['Bahnhof','Station'],['Bahnsteig','Peron'],['Straße','Gasse'],
+    ['Geschäft','Laden','Shop'],['Preis','Kosten','Betrag'],['Geld','Bargeld','Moneten'],
+    ['Wechselgeld','Kleingeld','Restgeld'],['Reisepass','Pass'],['Zimmer','Hotelzimmer','Gastzimmer'],
+    ['Toilette','Klo','WC','Bad'],['Kino','Filmtheater'],['Spaziergang','Rundgang'],
+    ['Computer','Rechner','PC'],['Post','E-Mail','Mail'],['Büro','Arbeitszimmer'],
+    ['Besprechung','Meeting','Treffen','Sitzung'],['Team','Mannschaft','Gruppe'],
+    ['Aufgabe','Übung','Hausaufgabe'],['T-Shirt','Shirt','Triko'],
+    ['Zeit','Uhrzeit'],['Wetter','Wetterlage','Klima'],
+    // Wie etwas ist: naheliegende Abstufungen, nicht jede Steigerung.
+    ['kalt','Kälte','kühl'],['klein','winzig','mini'],['groß','riesig'],
+    ['teuer','kostspielig'],['billig','günstig','preiswert'],['langsam','gemächlich'],
+    ['verrückt','übergeschnappt']
+  ],
   es:[['amor','amar','cariño','te quiero','te amo'],['trabajo','trabajar'],['ayuda','ayudar'],['sueño','dormir'],['pago','pagar'],['pedido','pedir']],
   'pt-BR':[['amor','amar','carinho','eu te amo','gosto de você'],['trabalho','trabalhar'],['ajuda','ajudar'],['sono','dormir'],['pagamento','pagar'],['pedido','pedir']]
 };

@@ -4,7 +4,10 @@ export const cardinalValues={uno:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,
 export const meaningGuidance={
   'favor:favor':'meaningHintFavor','por:por':'meaningHintPor','por:por-2':'meaningHintPor','por:por-3':'meaningHintPor',
   'te-quiero:te-quiero':'meaningHintTeQuiero','lavarte:lavarte':'meaningHintLavarte',
-  'gusto:gusto':'meaningHintGusto','gusto:gusto-2':'meaningHintGusto'
+  'gusto:gusto':'meaningHintGusto','gusto:gusto-2':'meaningHintGusto',
+  // Nahe Alltagswörter werden über das Konzeptnetz als Teilkenntnis übernommen; diese
+  // Einträge erklären den Unterschied zur notierten Form.
+  'amigo:friend':'meaningHintAmigo','amiga:amiga':'meaningHintAmiga','disculpe:disculpe':'meaningHintDisculpe'
 };
 export const meaningRules={
   'tambien:tambien':{

@@ -47,9 +47,12 @@ export function assessIntendedMeaning(answer,record,locale='de'){
   const matches=evaluations.filter(value=>value.accepted.length).map(value=>({...value,ids:value.accepted.map(item=>item.id)}));
   const suggestions=[...new Map(evaluations.flatMap(value=>value.suggestions).map(value=>[key(value.canonical),value])).values()];
   const covered=new Set(evaluations.flatMap(value=>value.matchedInputs));
+  const guidanceFor=entry=>[...new Set(entry.meanings.map(meaning=>meaning.guidanceKey).filter(Boolean))];
   const unmatched=matches.length&&!covered.has(key(answer))?[...new Set(atoms(answer).filter(input=>!covered.has(key(input))))]:[];
-  const feedback=matches.flatMap(value=>value.accepted.filter(item=>item.level!=='exact').map(item=>({...item,word:value.entry.word})));
-  if(unmatched.length)feedback.push({reason:'unmatched',word:record.entry.word,answer:unmatched.join(', '),canonical:matches.flatMap(value=>value.accepted.map(item=>item.canonical)).join(', ')});
+  // Jede Rückmeldung trägt die redaktionelle Erklärung der Karte bei, damit bei
+  // teilweisem Verständnis nicht nur die korrekte Form, sondern auch der Unterschied zeigt.
+  const feedback=matches.flatMap(value=>value.accepted.filter(item=>item.level!=='exact').map(item=>({...item,word:value.entry.word,hints:guidanceFor(value.entry)})));
+  if(unmatched.length)feedback.push({reason:'unmatched',word:record.entry.word,answer:unmatched.join(', '),canonical:matches.flatMap(value=>value.accepted.map(item=>item.canonical)).join(', '),hints:guidanceFor(record.entry)});
   const status=!String(answer??'').trim()?'empty':matches.length?'accepted':suggestions.length?'confirm':'unrecognized';
   const hints=status==='unrecognized'||unmatched.length?[...new Set(entries.flatMap(entry=>entry.meanings.map(meaning=>meaning.guidanceKey)).filter(Boolean))]:[];
   return {matches,feedback,hints,unmatched,suggestions:matches.length?[]:suggestions,status};
