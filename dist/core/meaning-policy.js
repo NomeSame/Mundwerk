@@ -61,6 +61,22 @@ function sameNumber(input,answer,locale){
   return a.length>=3&&/[aeiou]$/u.test(a)&&b===a+'s'||b.length>=3&&/[aeiou]$/u.test(b)&&a===b+'s';
 }
 const wordingAlias=Object.fromEntries(Object.entries(wordingVariants).map(([locale,groups])=>[locale,new Map(groups.flatMap(group=>group.map(word=>[key(word),key(group[0])])))]));
+// Ganze Gruppenmitglieder können Redewendungen sein; dann verglichen wird die vollständige
+// Eingabe, nie ein Stück davon. Einzelwörter bleiben beim Kernwort-Verfahren, damit kein
+// Teilwort und kein fremdes Wort durch diese Tür angenommen wird.
+const conceptMembers=Object.fromEntries(Object.entries(relatedConcepts).map(([locale,groups])=>[locale,groups.map(group=>new Set(group.map(key)))]));
+function sameConcept(input,answer,locale){
+  const candidate=key(input),expected=key(answer);
+  if(!candidate||!expected)return false;
+  const groups=relatedConcepts[locale],members=conceptMembers[locale];
+  for(let index=0;index<groups.length;index+=1){
+    if(members[index].has(expected)&&members[index].has(candidate))return true;
+    const group=groups[index];
+    const contains=value=>group.some(member=>key(member)===value||paradigms[locale].some(paradigm=>key(member)===key(paradigm.lemma)&&paradigm.forms.has(core(value,locale))));
+    if(contains(candidate)&&contains(expected))return true;
+  }
+  return false;
+}
 // „ich würde gerne“ statt der notierten Antwort „ich würde gern": nachweisbar derselbe
 // Satz, nur mit der anderen üblichen Endung. Nur ganze Redewendungen vergleichen, damit
 // kein Einzelwort über diese Tür angenommen wird und kein Teilstring zählt.
@@ -83,10 +99,7 @@ export function assessCoreMeaning(input,meaning,locale){
     const candidate=key(input),expected=key(answer);if(!candidate||!expected)continue;
     if(candidate.replace(articles[locale],'')===expected.replace(articles[locale],''))return {level:'accepted',reason:'context',canonical:answer};
     if(sameWording(input,answer,locale))return {level:'accepted',reason:'wording',canonical:answer};
-    if(relatedConcepts[locale].some(group=>{
-      const contains=value=>group.some(member=>key(member)===value||paradigms[locale].some(paradigm=>key(member)===key(paradigm.lemma)&&paradigm.forms.has(core(value,locale))));
-      return contains(candidate)&&contains(expected);
-    }))return {level:'partial',reason:'concept',canonical:answer};
+    if(sameConcept(input,answer,locale))return {level:'partial',reason:'concept',canonical:answer};
     if(verbKind(meaning)&&sameVerb(input,answer,locale))return {level:'partial',reason:'verbform',canonical:meaning.answers[0]};
     const reference=meaning.referenceAnswers??meaning.answers;
     if(reference.some(value=>/^[A-ZÄÖÜ]/u.test(value))&&sameNumber(input,answer,locale))return {level:'partial',reason:'number',canonical:answer};

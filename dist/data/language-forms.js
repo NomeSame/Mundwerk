@@ -22,35 +22,113 @@ export const nounParadigms={
 // Nur gepflegte Einträge hier — keine automatische Semantik, keine Teilstrings.
 export const relatedConcepts={
   de:[
-    ['Liebe','lieben','Zuneigung','ich liebe dich','ich habe dich lieb'],['Arbeit','arbeiten'],
+    ['Liebe','lieben','Zuneigung','ich liebe dich','ich habe dich lieb'],['Arbeit','arbeiten','Job','Beschäftigung','Tätigkeit'],
     ['Hilfe','helfen'],['Schlaf','schlafen'],['Zahlung','bezahlen'],['Bestellung','bestellen'],
+    ['bezahlen','zahlen','begleichen','berappen'],
     // Menschen und Familie: umgangssprachliche Wörter für dieselbe Person.
     ['Freund','Freundin','Kumpel','Kumpelin','Kollege','Kollegin'],
     ['Mutter','Mama','Mutti'],['Vater','Papa','Papi'],
     ['Mann','Mensch','Person','Typ'],['Frau','Ehefrau','Gattin'],
     ['Junge','Bub'],['Mädchen','Mädel'],['Familie','Verwandte','Angehörige'],
     ['Partner','Partnerin','Lebensgefährte','Lebensgefährtin'],['Paar','Beziehung','Partnerschaft'],
-    ['Arzt','Ärztin','Doktor','Mediziner'],
+    ['Arzt','Ärztin','Doktor','Mediziner'],['Hund','Hündin','Köter'],
+    ['Tourist','Urlauber','Reisender'],
     // Essen, Trinken, Zuhause: naheliegende Alltagswörter.
-    ['Essen','Speise','Gericht','Mahlzeit'],['Öl','Speiseöl'],
+    ['Essen','Speise','Gericht','Mahlzeit','Nahrung'],['Öl','Speiseöl'],
     ['Hähnchen','Huhn','Hühnchen','Poulet','Hendl'],
-    ['Tasse','Becher'],['Glas','Trinkglas','Becher'],['Tisch','Esstisch'],
-    // Unterwegs, Einkaufen, Stadt.
-    ['Zug','Bahn','Eisenbahn'],['Bahnhof','Station'],['Bahnsteig','Peron'],['Straße','Gasse'],
-    ['Geschäft','Laden','Shop'],['Preis','Kosten','Betrag'],['Geld','Bargeld','Moneten'],
-    ['Wechselgeld','Kleingeld','Restgeld'],['Reisepass','Pass'],['Zimmer','Hotelzimmer','Gastzimmer'],
+    ['Hühnerfleisch','Hähnchen','Chicken','Poulet'],['Rindfleisch','Rind','Beef'],
+    ['Tasse','Becher','Kaffeetasse'],['Glas','Trinkglas','Becher'],['Tisch','Esstisch'],
+    ['Karaffe','Kanne','Wasserkanne'],['Krug','Kanne'],
+    ['mit Kohlensäure','sprudelnd','Sprudel'],['ohne Kohlensäure','stilles Wasser'],
+    // Einkaufen, Bezahlen, Unterwegs, Stadt.
+    ['Geschäft','Laden','Shop','Supermarkt'],['Kasse','Kassa'],
+    ['Theke','Tresen','Ladentheke','Schanktheke'],
+    ['Einkaufskorb','Warenkorb'],['Einkaufswagen','Trolley','Einkaufstrolley'],
+    ['Quittung','Kassenbon','Bon','Beleg'],
+    ['Preis','Kosten','Betrag'],['Geld','Bargeld','Moneten','Kohle'],
+    ['Geldschein','Schein','Banknote'],['Wechselgeld','Kleingeld','Restgeld'],
+    ['Konto','Bankkonto','Girokonto'],['Bankkarte','EC-Karte','Debitkarte','Bankomatkarte','Scheckkarte'],
+    ['Kreditkarte','Creditcard'],
+    ['Zug','Bahn','Eisenbahn'],['Bahnhof','Station'],['Bahnsteig','Peron','Plattform'],
+    ['Haltestelle','Bushaltestelle'],['Straße','Gasse'],['Korridor','Gang','Flur'],
+    ['Fahrkarte','Ticket','Fahrschein'],['Reservierung','Buchung','Reservation'],
+    ['Reisepass','Pass'],['Zimmer','Hotelzimmer','Gastzimmer','Schlafzimmer'],
+    ['Hotel','Unterkunft','Herberge','Hostel'],['Empfang','Rezeption'],
     ['Toilette','Klo','WC','Bad'],['Kino','Filmtheater'],['Spaziergang','Rundgang'],
-    ['Computer','Rechner','PC'],['Post','E-Mail','Mail'],['Büro','Arbeitszimmer'],
-    ['Besprechung','Meeting','Treffen','Sitzung'],['Team','Mannschaft','Gruppe'],
-    ['Aufgabe','Übung','Hausaufgabe'],['T-Shirt','Shirt','Triko'],
-    ['Zeit','Uhrzeit'],['Wetter','Wetterlage','Klima'],
+    ['Speisekarte','Menü','Menu','Essenskarte'],
+    ['Computer','Rechner','PC','Personal Computer'],['Post','E-Mail','Mail','Brief'],
+    ['Büro','Arbeitszimmer','Office'],['Besprechung','Meeting','Treffen','Sitzung','Konferenz'],
+    ['Team','Mannschaft','Gruppe'],['Aufgabe','Übung','Hausaufgabe'],['T-Shirt','Shirt','Triko'],
+    ['Zeit','Uhrzeit'],['Wetter','Wetterlage','Klima'],['Jahreszeit','Saison'],
+    ['Kleidergröße','Konfektionsgröße','Größe'],['Landkarte','Plan'],
     // Wie etwas ist: naheliegende Abstufungen, nicht jede Steigerung.
     ['kalt','Kälte','kühl'],['klein','winzig','mini'],['groß','riesig'],
     ['teuer','kostspielig'],['billig','günstig','preiswert'],['langsam','gemächlich'],
-    ['verrückt','übergeschnappt']
+    ['verrückt','übergeschnappt','bescheuert']
   ],
-  es:[['amor','amar','cariño','te quiero','te amo'],['trabajo','trabajar'],['ayuda','ayudar'],['sueño','dormir'],['pago','pagar'],['pedido','pedir']],
-  'pt-BR':[['amor','amar','carinho','eu te amo','gosto de você'],['trabalho','trabalhar'],['ajuda','ajudar'],['sono','dormir'],['pagamento','pagar'],['pedido','pedir']]
+  es:[
+    ['amor','amar','cariño','te quiero','te amo'],['trabajo','trabajar','curro','chamba','labor'],
+    ['ayuda','ayudar'],['sueño','dormir'],['pago','pagar'],['pedido','pedir'],['muy','extremadamente'],
+    // Personas y familia: palabras cotidianas para la misma persona.
+    ['amigo','amiga','colega','compañero','compañera','amiguete','amigueta','compi'],
+    ['madre','mamá','mami'],['padre','papá','papi'],
+    ['niño','chico','chaval','crío'],['niña','chica','chavala'],
+    ['hombre','tipo','individuo','tío','señor'],['mujer','señora'],
+    ['pareja','novio','novia'],['médico','médica','doctor','doctora'],
+    ['policía','agente','agente de policía'],
+    // Comida y casa: nombres habituales de la misma cosa.
+    ['perro','can','perra','perrito'],['casa','hogar','vivienda'],
+    ['comida','alimento'],['pescado','pez','pescadito'],['plátano','banana','cambur'],
+    ['zumo','jugo'],['aceite','aceite de oliva'],['copa','copa de vino'],['taza','tazita'],
+    ['baño','aseo','servicio','cuarto de baño','wc'],
+    // Compras, dinero, trayectos.
+    ['dinero','pasta','plata','guita','efectivo','en metálico'],
+    ['precio','coste','costo'],['barato','económico','a buen precio','de oferta'],
+    ['cuenta','factura'],['recibo','ticket','tique','justificante','comprobante','ticket de compra'],
+    ['cambio','vuelto','devuelta'],['tarjeta','tarjeta bancaria','tarjeta de débito','tarjeta de crédito'],
+    ['oficina','despacho'],
+    ['caja','caja registradora','caja del supermercado'],['tienda','comercio','supermercado','super'],
+    ['supermercado','super'],['carta','menú','carta del menú'],
+    ['autobús','bus','guagua','micro'],['tren','ferrocarril'],['billete','boleto'],
+    ['estación','estación de tren','estación del año','época','temporada'],
+    ['andén','plataforma'],['parada','parada de autobús','parada de bus','apeadero'],
+    ['pasillo','corredor','pasadizo'],['puerta','portón'],['salida','puerta de emergencia'],
+    ['hotel','hostal','albergue'],['habitación','cuarto','dormitorio','pieza'],
+    ['playa','orilla','costa'],['paseo','paseíllo'],['reunión','junta','encuentro','meeting'],
+    ['tarea','deberes','deberes de casa','deber escolar'],['ordenador','computador','pc','equipo'],
+    ['correo','correo electrónico','e-mail','email'],
+    ['cerca','cerquita','a un paso','al lado'],['lejos','a lo lejos'],['poco','poquito','un poco'],
+    ['tiempo','clima','tiempo atmosférico'],['loco','chiflado','chalado','loquito','loquita']
+  ],
+  'pt-BR':[
+    ['amor','amar','carinho','eu te amo','gosto de você'],['trabalho','trabalhar','trampo','serviço'],
+    ['ajuda','ajudar'],['sono','dormir'],['pagamento','pagar'],['pedido','pedir'],
+    // Pessoas e família: palavras do dia a dia para a mesma pessoa.
+    ['amigo','amiga','colega','parceiro','parceira','amigão','amigona','chapa'],
+    ['mãe','mame','mamãe'],['pai','paizão'],
+    ['menino','garoto','moleque'],['menina','garota','piá'],['criança','miúdo'],
+    ['homem','cara','sujeito'],['mulher','esposa'],['casal','par'],
+    ['médico','médica','doutor','doutora'],['policial','agente'],['emergência','pronto-socorro','urgência'],
+    // Comida e casa: nomes correntes da mesma coisa.
+    ['cachorro','cão','vira-lata','cachorrão'],['casa','lar','residência'],
+    ['comida','alimentação','alimento'],['refeição','prato'],['peixe','pescado','peixinho'],
+    ['suco','sumo'],['café da manhã','desjejum'],['xícara','copo'],['jarra','jarro'],
+    ['farmácia','drogaria'],
+    // Compras, dinheiro, trajetos.
+    ['dinheiro','grana','bufunfa','caixa','em espécie','em dinheiro'],
+    ['preço','valor','custo'],['barato','em conta'],['conta','fatura'],['recibo','comprovante'],
+    ['cartão','cartão bancário','cartão de banco','cartão magnético'],
+    ['supermercado','mercado','super'],['loja','shopping','comércio','lojinha'],
+    ['tarefa','lição de casa','dever de casa','lição'],['reunião','meeting','encontro'],
+    ['cardápio','menu'],['e-mail','correio eletrônico'],
+    ['ônibus','busão','coletivo','micro'],['trem','comboio'],['passagem','bilhete','ticket'],
+    ['estação','estação de trem','estação do ano','época','temporada'],
+    ['quarto','cômodo','aposento'],['hotel','pousada','hostel'],
+    ['banheiro','toalete','wc'],['praia','orla','beira-mar','costa'],['passeio','caminhada','rolezinho'],
+    ['computador','pc','micro','notebook'],
+    ['perto','pertinho','do lado','colado'],['longe','a distância'],['pouco','pouquinho','um pouco'],
+    ['devagar','devagarinho']
+  ]
 };
 
 // Dieselbe Sache, nur mit der anderen üblichen Endung: „gern“ und „gerne“.
