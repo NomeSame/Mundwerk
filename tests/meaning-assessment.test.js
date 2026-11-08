@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {assessIntendedMeaning} from '../dist/core/meaning-assessment.js';
 import {directedContent} from '../dist/core/content-direction.js';
-import {matchWords} from '../dist/core/matching.js';
+import {matchWords,assessAnswer} from '../dist/core/matching.js';
 import {createStore} from '../dist/state/store.js';
 import {createRepository,validProfile} from '../dist/data/progress.js';
 import {assessmentView} from '../dist/ui/assessment.js';
@@ -77,6 +77,33 @@ test('partial overlap keeps the wordcard in practice while a whole phrase is mas
   const cards={word:[{key:'full'},{key:'tardes:tardes'},{key:'me-gustaria:me-gustaria'}],sentence:[],reply:[],spelling:[]};
   const profile={...s.state.profile,known:[...s.state.profile.known,'full']};
   assert.equal(buildSession(cards,profile,'word','all')[0].key,'tardes:tardes');
+});
+test('a polite apology worded differently is accepted as the noted apology',()=>{
+  for(const [answer,canonical]of [['Verzeihung','Entschuldigung'],['verzeihung','Entschuldigung'],['VERZEIHUNG','Entschuldigung'],['Verzeihen Sie','entschuldigen Sie']]){
+    const result=review('disculpe',answer);assert.equal(result.status,'accepted',answer);
+    assert.equal(result.feedback[0].reason,'context',answer);
+    assert.equal(result.feedback[0].level,'accepted',answer);
+    assert.equal(result.feedback[0].canonical,canonical,answer);
+  }
+  // Die notierten Formen bleiben direkt grün, ohne Hinweis.
+  for(const answer of ['Entschuldigung','entschuldigen Sie'])assert.equal(review('disculpe',answer).feedback.length,0,answer);
+  // Keine Teilstring-, semantische oder Toleranztür: anderes Wort, Wortstumpf, Negation.
+  for(const wrong of ['Schuld','Schuldigung','Verzeichnis','Verzeih','Verzeihung nicht','Hund','gute Entschuldigung'])assert.notEqual(review('disculpe',wrong).status,'accepted',wrong);
+});
+test('the accepted apology wording is stored as full knowledge and survives a reload',()=>{
+  const storage=memory(),s=createStore(createRepository(storage));s.words('disculpe');s.acceptWords();
+  assert.equal(s.translations({disculpe:'Verzeihung'}),true);
+  const evidence=s.state.profile.meaningEvidence['disculpe:disculpe'];
+  assert.equal(evidence.level,'accepted');assert.equal(evidence.reason,'context');assert.equal(evidence.canonical,'Entschuldigung');
+  assert.ok(s.state.profile.known.includes('disculpe:disculpe'));assert.ok(validProfile(s.state.profile));
+  assert.ok(assessmentView(s.state).includes('Übernommen: „Verzeihung“'));
+  const reloaded=createStore(createRepository(storage));assert.equal(reloaded.state.profile.meaningEvidence['disculpe:disculpe'].reason,'context');
+});
+test('the tolerance stays at intake: the learning round still wants the noted apology form',()=>{
+  const expected=['entschuldigen Sie','Entschuldigung'];
+  assert.equal(assessAnswer('Verzeihung',expected).correct,false);
+  assert.equal(assessAnswer('Verzeihung',expected,{strictSpelling:true}).correct,false);
+  assert.equal(assessAnswer('Entschuldigung',expected).correct,true);
 });
 test('malformed evidence is rejected while legacy profiles stay valid',()=>{
   const s=createStore(createRepository(memory()));assert.ok(validProfile(s.state.profile));

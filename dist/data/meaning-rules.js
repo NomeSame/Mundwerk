@@ -16,6 +16,9 @@ export const meaningRules={
   // deshalb als teilweise verstanden; die genaue Form bleibt beim Üben offen.
   'tarde:tarde':{de:[rule('am Nachmittag','context','Nachmittag'),rule('nachmittags','context','Nachmittag'),rule('Tag','concept','Nachmittag','partial'),rule('Tage','concept','Nachmittag','partial')]},
   'tardes:tardes':{de:[rule('am Nachmittag','context','Nachmittage'),rule('nachmittags','context','Nachmittage'),rule('Tag','concept','Nachmittage','partial'),rule('Tage','concept','Nachmittage','partial')]},
+  // Notiert sind „Entschuldigung“ und „entschuldigen Sie“. „Verzeihung“ ist dasselbe
+  // höfliche Wort mit anderer Wendung, also übernommen; die notierte Form bleibt Referenz.
+  'disculpe:disculpe':{de:[rule('Verzeihung','context','Entschuldigung'),rule('Verzeihen Sie','context','entschuldigen Sie')]},
   'puta:puta':{
     de:[rule('Schlampe','register','Hure'),rule('Prostituierte','register','Hure')],
     es:[rule('zorra','register','puta')],
