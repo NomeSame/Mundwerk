@@ -1,8 +1,9 @@
 import {esc,button,eyebrow,kindLabels} from './components.js';
 import {uiContext} from './context.js';
+import {MAX_ROUND} from '../core/session.js';
 export function practiceSettings(s){
   const {t}=uiContext(s),counts=s.inventory;
-  return `<form class="practice-settings" data-form="settings"><div><label for="practice-mode">${t('whatPractice')}</label><select name="mode" id="practice-mode">${['path','word','sentence','reply','spelling'].map(id=>`<option value="${id}" ${s.profile.mode===id?'selected':''}>${t(id)}</option>`).join('')}</select></div><div><label for="practice-length">${t('length')}</label><select name="length" id="practice-length">${[10,20,'all'].map(id=>`<option value="${id}" ${s.profile.length===id?'selected':''}>${id==='all'?t('all'):t('exercises',{count:id})}</option>`).join('')}</select></div><p class="fine">${t('inventory',{words:counts.word.length,sentences:counts.sentence.length,replies:counts.reply.length})}<br>${t('spellingCount',{count:counts.spelling.length})}</p></form>`;
+  return `<form class="practice-settings" data-form="settings"><div><label for="practice-mode">${t('whatPractice')}</label><select name="mode" id="practice-mode">${['path','word','sentence','reply','spelling'].map(id=>`<option value="${id}" ${s.profile.mode===id?'selected':''}>${t(id)}</option>`).join('')}</select></div><div><label for="practice-length">${t('length')}</label><select name="length" id="practice-length">${[...Array.from({length:MAX_ROUND},(_,index)=>index+1),'all'].map(id=>`<option value="${id}" ${s.profile.length===id?'selected':''}>${id==='all'?t('all'):t(id===1?'exercise':'exercises',{count:id})}</option>`).join('')}</select></div><p class="fine">${t('inventory',{words:counts.word.length,sentences:counts.sentence.length,replies:counts.reply.length})}<br>${t('spellingCount',{count:counts.spelling.length})}</p></form>`;
 }
 export function practiceView(s,topic){
   const {t,target,targetLanguage}=uiContext(s);

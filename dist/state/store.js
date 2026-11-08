@@ -4,7 +4,7 @@ import {assessReply} from '../core/reply-assessment.js';
 import {assessIntendedMeaning} from '../core/meaning-assessment.js';
 import {findByMeaning} from '../core/meaning-search.js';
 import {recordAttempt} from '../core/learning.js';
-import {availableCards,buildSession,learningStage} from '../core/session.js';
+import {availableCards,buildSession,learningStage,roundSize} from '../core/session.js';
 import {topics} from '../data/topics.js';
 import {directedContent,validPair} from '../core/content-direction.js';
 import {emptyProfile} from '../data/progress.js';
@@ -13,7 +13,7 @@ export function createStore(repository) {
   profile.baseLanguage??='de';profile.targetLanguage??='es';profile.pairs??={};profile.meaningEvidence??={};
   let {vocabulary,sentences,replies}=directedContent(profile.baseLanguage,profile.targetLanguage);
   if (!['path','word','sentence','reply','spelling'].includes(profile.mode)) profile.mode='path';
-  if (![10,20,'all'].includes(profile.length)) profile.length=20;
+  profile.length=roundSize(profile.length,20);
   const state={profile,translationAnswers:{},meaningReviews:{},meaningFeedback:[],warning:loaded.error,page:profile.ready?'home':profile.known.length?'topics':'welcome',round:1,words:[],translated:[],rejected:[],missing:[],cards:[],index:0,revealed:false,checked:false,correct:false,spelling:false,answer:'',sessionCorrect:0,install:false,mergeReport:null};
   profile.workspaces=profile.workspaces&&typeof profile.workspaces==='object'&&!Array.isArray(profile.workspaces)?profile.workspaces:{};
   const restore=()=>{
@@ -121,7 +121,7 @@ export function createStore(repository) {
     },
     configure(mode,length){
       if(['path','word','sentence','reply','spelling'].includes(mode))profile.mode=mode;
-      if([10,20,'all'].includes(length))profile.length=length;
+      profile.length=roundSize(length,profile.length);
       emit();
     },
     start(){

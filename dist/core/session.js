@@ -14,19 +14,28 @@ export function learningStage(cards, profile) {
   if (cards.word.filter(card=>mastered(card,profile)).length >= Math.min(4,cards.word.length)) return 'sentence';
   return 'word';
 }
+// One number for the whole product: how large a practice round may be by choice.
+export const MAX_ROUND = 30;
+export function roundSize(value, fallback = 20) {
+  if (value === 'all') return 'all';
+  const size = Number(value);
+  return Number.isInteger(size) && size >= 1 ? Math.min(MAX_ROUND, size) : fallback;
+}
 export function buildSession(cards, profile, mode = 'path', length = 20) {
+  const size = roundSize(length, 20);
   const sorted = Object.fromEntries(Object.entries(cards).map(([kind,list])=>[kind,[...list].sort((a,b)=>
     Number(mastered(a,profile))-Number(mastered(b,profile)) || (profile.progress[a.key]?.attempts ?? 0)-(profile.progress[b.key]?.attempts ?? 0))]));
-  if (mode !== 'path') return length === 'all' ? sorted[mode] ?? [] : (sorted[mode] ?? []).slice(0,length);
+  if (mode !== 'path') return size === 'all' ? sorted[mode] ?? [] : (sorted[mode] ?? []).slice(0,size);
   const stage = learningStage(cards,profile);
   const order = stage === 'reply' ? ['reply','sentence','word'] : stage === 'sentence' ? ['sentence','reply','word'] : ['word','sentence','reply'];
-  if (length === 'all') return order.flatMap(kind=>sorted[kind]);
-  const shares = [Math.ceil(length*.4),Math.ceil(length*.3),Math.floor(length*.3)];
+  if (size === 'all') return order.flatMap(kind=>sorted[kind]);
+  const shares = [Math.ceil(size*.4),Math.ceil(size*.3),Math.floor(size*.3)];
   const picked = Object.fromEntries(order.map((kind,i)=>[kind,sorted[kind].slice(0,shares[i])]));
-  let remaining = length-Object.values(picked).flat().length;
+  let remaining = size-Object.values(picked).flat().length;
   for (const kind of order) {
     const extra = sorted[kind].slice(picked[kind].length,picked[kind].length+Math.max(remaining,0));
     picked[kind].push(...extra); remaining -= extra.length;
   }
-  return order.flatMap(kind=>picked[kind]);
+  // A small round must stay small: the shares only spread over the kinds, they never enlarge it.
+  return order.flatMap(kind=>picked[kind]).slice(0,size);
 }
