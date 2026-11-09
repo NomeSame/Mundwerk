@@ -4,6 +4,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {assetPaths} from './asset-list.mjs';
 import {peerAllowed} from './network.mjs';
+import {parseOnionAddress,onionRequestAllowed} from './onion.mjs';
 const defaultRoot=fileURLToPath(new URL('../dist/',import.meta.url));
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.webmanifest':'application/manifest+json','.svg':'image/svg+xml','.png':'image/png'};
 const securityHeaders={
@@ -23,15 +24,24 @@ export async function loadAssets(root=defaultRoot) {
   }
   return assets;
 }
-export function createStaticServer({assets,lan=null,port=4173}={}) {
+export function createStaticServer({assets,lan=null,port=4173,onion=[]}={}) {
   const hosts=new Set([`localhost:${port}`,`127.0.0.1:${port}`,...(lan?[`${lan.ip}:${port}`]:[])]);
+  const onionHosts=new Map();
+  for(const value of onion){
+    const host=parseOnionAddress(value);
+    if(!host)throw Error('Eine angekuendigte .onion-Adresse hat nicht das erwartete Format.');
+    for(const form of [host,`${host}:80`]) onionHosts.set(form,host);
+  }
+  if(onion.length*2!==onionHosts.size)throw Error('Eine angekuendigte .onion-Adresse hat nicht das erwartete Format.');
   const reject=(response,status)=>{
     response.writeHead(status,{...securityHeaders,'Content-Type':'text/plain; charset=utf-8','Connection':'close',...(status===405?{Allow:'GET, HEAD'}:{})});
     response.end('Anfrage nicht erlaubt.');
   };
   const server=http.createServer({maxHeaderSize:8192,requestTimeout:10000,headersTimeout:5000,keepAliveTimeout:3000},(request,response)=>{
-    if(!peerAllowed(request.socket.remoteAddress,lan))return reject(response,403);
-    if(!hosts.has(request.headers.host))return reject(response,403);
+    const announced=onionHosts.get(request.headers.host)??null;
+    const viaOnion=onionRequestAllowed(request.socket.remoteAddress,onionHosts.size)&&announced!==null;
+    if(!viaOnion&&!peerAllowed(request.socket.remoteAddress,lan))return reject(response,403);
+    if(!hosts.has(request.headers.host)&&announced===null)return reject(response,403);
     if(!['GET','HEAD'].includes(request.method))return reject(response,405);
     if(request.headers['transfer-encoding']||(request.headers['content-length']&&request.headers['content-length']!=='0'))return reject(response,400);
     const raw=request.url??'';

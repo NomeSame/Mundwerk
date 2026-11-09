@@ -8,4 +8,4 @@ if($process){
   Stop-Process -Id $process.Id
 }
 Remove-Item -LiteralPath $statePath
-Write-Output 'Sprachinseln-Webserver beendet. Die Website ist im WLAN nicht mehr erreichbar.'
+Write-Output 'Sprachinseln-Webserver beendet. Die Website ist im WLAN und ueber Tor nicht mehr erreichbar.'
