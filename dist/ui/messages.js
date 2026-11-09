@@ -1,5 +1,9 @@
 // Jede Meldung: Deutsch, Spanisch, brasilianisches Portugiesisch.
 export const messages={
+  brandName:['Sprachinseln','Islas de idiomas','Ilhas de idiomas'],
+  brandMark:['S','I','I'],
+  brandTitle:['Sprachinseln — Dein Alltag. Deine Worte.','Islas de idiomas — Tu día a día. Tus palabras.','Ilhas de idiomas — Seu dia a dia. Suas palavras.'],
+  brandDescription:['Dein Alltag. Deine Worte. Lerne in kleinen Schritten.','Tu día a día. Tus palabras. Aprende paso a paso.','Seu dia a dia. Suas palavras. Aprenda passo a passo.'],
   resumeError:['Dein Lernstand ist erhalten. Die offene Sitzung konnte nach der Aktualisierung nicht wiederhergestellt werden.','Tu progreso se conserva. No se pudo restaurar la sesión abierta tras la actualización.','Seu progresso foi mantido. Não foi possível restaurar a sessão aberta após a atualização.'],
   meaningdigits:['Zahl erkannt: {answer}. Ausgeschrieben: {canonical}. Beim Üben der Zahlwörter schreibst du das Wort.','Número reconocido: {answer}. En letras: {canonical}. Al practicar palabras numéricas, escribe la palabra.','Número reconhecido: {answer}. Por extenso: {canonical}. Na prática de palavras numéricas, escreva a palavra.'],
   meaningconcept:['Grundzusammenhang erkannt. Genauer bedeutet es: {canonical}. Die genaue Bedeutung bleibt zum Üben offen.','Concepto básico reconocido. Más precisamente: {canonical}. Queda practicar el significado preciso.','Conceito básico reconhecido. Mais precisamente: {canonical}. O significado exato fica para praticar.'],

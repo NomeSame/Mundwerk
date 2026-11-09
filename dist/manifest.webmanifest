@@ -1,6 +1,6 @@
 {
   "id":"./", "name":"Sprachinseln", "short_name":"Sprachinseln",
-  "description":"Dein Alltag. Deine Worte. Lerne Spanisch in kleinen Schritten.",
+  "description":"Dein Alltag. Deine Worte. Lerne in kleinen Schritten.",
   "lang":"de", "start_url":"./", "scope":"./", "display":"standalone",
   "background_color":"#f6f4ed", "theme_color":"#f6f4ed",
   "icons":[{"src":"./icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},{"src":"./icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]
